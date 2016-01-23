@@ -37,6 +37,24 @@
         <activity
             android:name=".GoogleMap"
             android:label="@string/title_activity_gogole_map"></activity>
+
+        <activity
+            android:name=".Help"
+            ></activity>
+
+        <activity
+            android:name=".ProfileSettings"
+            ></activity>
+
+        <activity
+            android:name=".Settings"
+            ></activity>
+
+        <activity
+            android:name=".ViewData"
+            ></activity>
+
+
     </application>
 
 </manifest>

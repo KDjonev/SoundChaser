@@ -19,7 +19,27 @@ public class MainActivity extends AppCompatActivity {
         switch (v.getId())
         {
             case R.id.startActivityButton :
-                i = new Intent(this, GoogleMap.class);
+            i = new Intent(this, GoogleMap.class);
+            startActivity(i);
+            break;
+
+            case R.id.helpButton :
+                i = new Intent(this, Help.class);
+                startActivity(i);
+                break;
+
+            case R.id.changeSettingsButton :
+                i = new Intent(this, Settings.class);
+                startActivity(i);
+                break;
+
+            case R.id.changeProfileSettingsButton :
+                i = new Intent(this, ProfileSettings.class);
+                startActivity(i);
+                break;
+
+            case R.id.viewDataButton :
+                i = new Intent(this, ViewData.class);
                 startActivity(i);
                 break;
         }

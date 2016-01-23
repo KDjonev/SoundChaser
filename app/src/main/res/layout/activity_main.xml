@@ -14,9 +14,53 @@
         android:layout_height="wrap_content"
         android:text="@string/startActivity"
         android:id="@+id/startActivityButton"
-        android:layout_centerVertical="true"
+        android:clickable="true"
+        android:onClick="onClick"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="58dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/viewData"
+        android:id="@+id/viewDataButton"
+        android:clickable="true"
+        android:onClick="onClick"
+        android:layout_below="@+id/startActivityButton"
+        android:layout_alignLeft="@+id/helpButton"
+        android:layout_alignStart="@+id/helpButton"
+        android:layout_marginTop="72dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/helpButton"
+        android:id="@+id/helpButton"
+        android:onClick="onClick"
+        android:clickable="true"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="131dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/changeSettings"
+        android:id="@+id/changeSettingsButton"
+        android:layout_below="@+id/startActivityButton"
         android:layout_centerHorizontal="true"
         android:clickable="true"
         android:onClick="onClick" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/changeProfileSettings"
+        android:id="@+id/changeProfileSettingsButton"
+        android:layout_above="@+id/helpButton"
+        android:layout_centerHorizontal="true"
+        android:onClick="onClick"
+        android:clickable="true" />
 </RelativeLayout>
 
