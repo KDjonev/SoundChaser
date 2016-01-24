@@ -16,21 +16,9 @@
         android:id="@+id/startActivityButton"
         android:clickable="true"
         android:onClick="onClick"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="58dp" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/viewData"
-        android:id="@+id/viewDataButton"
-        android:clickable="true"
-        android:onClick="onClick"
-        android:layout_below="@+id/startActivityButton"
-        android:layout_alignLeft="@+id/helpButton"
-        android:layout_alignStart="@+id/helpButton"
-        android:layout_marginTop="72dp" />
+        android:width="@dimen/main_activity_button_horizontal"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -39,28 +27,44 @@
         android:id="@+id/helpButton"
         android:onClick="onClick"
         android:clickable="true"
+        android:width="@dimen/main_activity_button_horizontal"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="131dp" />
+        android:layout_alignLeft="@+id/settingsButton"
+        android:layout_alignStart="@+id/settingsButton" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/changeSettings"
-        android:id="@+id/changeSettingsButton"
-        android:layout_below="@+id/startActivityButton"
-        android:layout_centerHorizontal="true"
+        android:text="@string/settings"
+        android:id="@+id/settingsButton"
         android:clickable="true"
-        android:onClick="onClick" />
+        android:onClick="onClick"
+        android:width="@dimen/main_activity_button_horizontal"
+        android:layout_above="@+id/helpButton"
+        android:layout_alignLeft="@+id/viewDataButton"
+        android:layout_alignStart="@+id/viewDataButton" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/changeProfileSettings"
-        android:id="@+id/changeProfileSettingsButton"
-        android:layout_above="@+id/helpButton"
-        android:layout_centerHorizontal="true"
+        android:text="@string/profile"
+        android:id="@+id/profileButton"
         android:onClick="onClick"
-        android:clickable="true" />
+        android:clickable="true"
+        android:width="@dimen/main_activity_button_horizontal"
+        android:layout_above="@+id/viewDataButton"
+        android:layout_alignLeft="@+id/startActivityButton"
+        android:layout_alignStart="@+id/startActivityButton" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/viewData"
+        android:id="@+id/viewDataButton"
+        android:width="@dimen/main_activity_button_horizontal"
+        android:onClick="onClick"
+        android:layout_above="@+id/settingsButton"
+        android:layout_alignLeft="@+id/profileButton"
+        android:layout_alignStart="@+id/profileButton" />
 </RelativeLayout>
 
