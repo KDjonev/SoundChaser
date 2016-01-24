@@ -9,6 +9,13 @@ import android.os.Bundle;
 public class ProfileSettings extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.stub);
+
+        boolean isProfileCreated = false;
+
+        if (!isProfileCreated) /* If profile has not yet been created, create it */
+            setContentView(R.layout.profile_creation);
+        else    /* If profile has been created, show profile info. */
+            setContentView(R.layout.profile_view);
     }
+
 }

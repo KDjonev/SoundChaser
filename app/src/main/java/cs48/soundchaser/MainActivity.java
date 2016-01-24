@@ -28,12 +28,12 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
                 break;
 
-            case R.id.changeSettingsButton :
+            case R.id.settingsButton :
                 i = new Intent(this, Settings.class);
                 startActivity(i);
                 break;
 
-            case R.id.changeProfileSettingsButton :
+            case R.id.profileButton:
                 i = new Intent(this, ProfileSettings.class);
                 startActivity(i);
                 break;
@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
                 i = new Intent(this, ViewData.class);
                 startActivity(i);
                 break;
+
         }
     }
 }
