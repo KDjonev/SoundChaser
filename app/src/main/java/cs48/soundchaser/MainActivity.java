@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
         switch (v.getId())
         {
             case R.id.startActivityButton :
-            i = new Intent(this, GoogleMap.class);
+            i = new Intent(this, OurGoogleMap.class);
             startActivity(i);
             break;
 
