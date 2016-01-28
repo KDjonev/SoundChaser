@@ -1,71 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="cs48.soundchaser.MainActivity"
-    android:background="@drawable/sound_chaser">
+    android:orientation="vertical">
 
-    <Button
-        android:layout_width="wrap_content"
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:minHeight="?attr/actionBarSize"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/startActivity"
-        android:id="@+id/startActivityButton"
-        android:clickable="true"
-        android:onClick="onClick"
-        android:width="@dimen/main_activity_button_horizontal"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        app:titleTextColor="@android:color/white"
+        android:background="@color/toolbarColor"
+        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Dark" >
+    </android.support.v7.widget.Toolbar>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/helpButton"
-        android:id="@+id/helpButton"
-        android:onClick="onClick"
-        android:clickable="true"
-        android:width="@dimen/main_activity_button_horizontal"
-        android:layout_alignParentBottom="true"
-        android:layout_alignLeft="@+id/settingsButton"
-        android:layout_alignStart="@+id/settingsButton" />
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="cs48.soundchaser.MainActivity"
+        android:background="@drawable/sound_chaser"
+        android:paddingTop="20dp">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/settings"
-        android:id="@+id/settingsButton"
-        android:clickable="true"
-        android:onClick="onClick"
-        android:width="@dimen/main_activity_button_horizontal"
-        android:layout_above="@+id/helpButton"
-        android:layout_alignLeft="@+id/viewDataButton"
-        android:layout_alignStart="@+id/viewDataButton" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/startActivity"
+            android:id="@+id/startActivityButton"
+            android:clickable="true"
+            android:onClick="onClick"
+            android:width="@dimen/main_activity_button_horizontal"
+            android:background="@color/toolbarColor"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="6dp"
+            android:textColor="#ffffff" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/profile"
-        android:id="@+id/profileButton"
-        android:onClick="onClick"
-        android:clickable="true"
-        android:width="@dimen/main_activity_button_horizontal"
-        android:layout_above="@+id/viewDataButton"
-        android:layout_alignLeft="@+id/startActivityButton"
-        android:layout_alignStart="@+id/startActivityButton" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/viewData"
-        android:id="@+id/viewDataButton"
-        android:width="@dimen/main_activity_button_horizontal"
-        android:onClick="onClick"
-        android:layout_above="@+id/settingsButton"
-        android:layout_alignLeft="@+id/profileButton"
-        android:layout_alignStart="@+id/profileButton" />
-</RelativeLayout>
+    </RelativeLayout>
+
+
+</LinearLayout>
 
