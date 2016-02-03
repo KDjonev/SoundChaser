@@ -51,7 +51,7 @@
             android:name=".Help" />
 
         <activity
-            android:name=".ProfileSettings" />
+            android:name=".Profile" />
 
         <activity
             android:name=".Settings" />

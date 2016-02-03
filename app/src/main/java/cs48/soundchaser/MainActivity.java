@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
                 break;
             case R.id.profile :
-                i = new Intent(this, ProfileSettings.class);
+                i = new Intent(this, Profile.class);
                 startActivity(i);
                 break;
             case R.id.viewData :
