@@ -26,6 +26,9 @@
     <string name="setFtViewText">-</string>
     <string name="setInViewText">-</string>
     <string name="setWeightViewText">-</string>
+    <string name="startActivity2">Start Activity</string>
+    <string name="radius">2.5</string>
+    <string name="distance">5</string>
 
     <string-array name="months">
         <item>Jan</item>

@@ -1,21 +1,27 @@
 package cs48.soundchaser;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 public class OurGoogleMap extends FragmentActivity implements LocationProvider.LocationCallback {
 
     public static final String TAG = OurGoogleMap.class.getSimpleName();
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
-
     private LocationProvider mLocationProvider;
 
     @Override
@@ -23,8 +29,8 @@ public class OurGoogleMap extends FragmentActivity implements LocationProvider.L
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_google_map);
         setUpMapIfNeeded();
-
         mLocationProvider = new LocationProvider(this, this);
+
     }
 
     @Override
@@ -39,6 +45,13 @@ public class OurGoogleMap extends FragmentActivity implements LocationProvider.L
         super.onPause();
         mLocationProvider.disconnect();
     }
+    /*
+    public void onBackPressed()
+    {
+        Intent i = new Intent(this, Help.class);
+        startActivity(i);
+    }
+    */
 
     /**
      * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
@@ -80,17 +93,55 @@ public class OurGoogleMap extends FragmentActivity implements LocationProvider.L
 
     public void handleNewLocation(Location location) {
         Log.d(TAG, location.toString());
-
+        Log.v("newLocation", location.toString());
         double currentLatitude = location.getLatitude();
         double currentLongitude = location.getLongitude();
         LatLng latLng = new LatLng(currentLatitude, currentLongitude);
+        if(Globals.getStartLocation() == null)
+        {
+            Globals.setStartLocation(latLng);
+        }
+        else
+        {
+            Globals.setCurrentLocation(latLng);
+        }
 
         mMap.addMarker(new MarkerOptions().position(new LatLng(currentLatitude, currentLongitude)).title("Current Location"));
         MarkerOptions options = new MarkerOptions()
                 .position(latLng)
                 .title("I am here!");
         mMap.addMarker(options);
-        float zoomLevel = 16; //This goes up to 21
+        float zoomLevel = 15; //This goes up to 21
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
+        drawCircle(latLng);
+        Context context = getApplicationContext();
+        CharSequence text = "new Location!";
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
+    }
+
+    private void drawCircle( LatLng location ) {
+        if(mMap == null || !Globals.getDrawRadius())
+        {
+            return;
+        }
+        CircleOptions options = new CircleOptions();
+        options.center(location);
+        //Radius in meters
+        options.radius(Globals.getMaximumRadius() * 1000);
+        options.strokeWidth(10);
+        mMap.addCircle(options);
+        Globals.setDrawRadius(false);
+    }
+
+    private void drawPath()
+    {
+        Polyline line = mMap.addPolyline(new PolylineOptions()
+                        .addAll(Globals.getListOfLocations())
+                        .width(12)
+                        .color(Color.parseColor("#05b1fb"))//Google maps blue color
+                        .geodesic(true)
+        );
     }
 }
