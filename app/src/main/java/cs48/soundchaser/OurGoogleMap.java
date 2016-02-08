@@ -11,6 +11,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.Display;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -21,6 +22,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -32,7 +34,7 @@ import com.google.android.gms.maps.model.Marker;
 public class OurGoogleMap extends FragmentActivity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+        com.google.android.gms.location.LocationListener {
 
     public static final String TAG = OurGoogleMap.class.getSimpleName();
 
@@ -48,10 +50,12 @@ public class OurGoogleMap extends FragmentActivity implements
     private LocationRequest mLocationRequest;
     Marker mCurrLocation;
     Marker startLocation;
+    Marker finishLocation;
     protected int mDpi = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i("runnin", "onCreate start");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_google_map);
         setUpMapIfNeeded();
@@ -67,25 +71,30 @@ public class OurGoogleMap extends FragmentActivity implements
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(5 * 1000)        // 5 seconds, in milliseconds
-                .setFastestInterval(1 * 1000); // 1 second, in milliseconds
+                .setInterval(9 * 1000)        // 9 seconds, in milliseconds
+                .setFastestInterval(3 * 1000); // 3 second, in milliseconds
+        Log.i("runnin", "onCreate finished");
     }
 
     @Override
     protected void onResume() {
+        Log.i("runnin", "onResume start");
         super.onResume();
         setUpMapIfNeeded();
         mGoogleApiClient.connect();
+        Log.i("runnin", "onResume finish");
     }
 
     @Override
     protected void onPause() {
+        Log.i("runnin", "onPause start");
         super.onPause();
 
         if (mGoogleApiClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
             mGoogleApiClient.disconnect();
         }
+        Log.i("runnin", "onPause finsished");
     }
 
     /**
@@ -104,6 +113,7 @@ public class OurGoogleMap extends FragmentActivity implements
      * method in {@link #onResume()} to guarantee that it will be called.
      */
     private void setUpMapIfNeeded() {
+        Log.i("runnin", "setUpMapIFneeded start");
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
@@ -114,6 +124,7 @@ public class OurGoogleMap extends FragmentActivity implements
                 setUpMap();
             }
         }
+        Log.i("runnin", "setUpMapIFneeded finish");
     }
 
     /**
@@ -124,10 +135,12 @@ public class OurGoogleMap extends FragmentActivity implements
      */
     private void setUpMap() {
         //mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        Log.i("runnin", "setUpMap start");
     }
 
     @Override
     public void onConnected(Bundle bundle) {
+        Log.i("runnin", "onConnected start");
         try {
             Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
@@ -140,11 +153,12 @@ public class OurGoogleMap extends FragmentActivity implements
         } catch (SecurityException e) {
             e.printStackTrace();
         }
+        Log.i("runnin", "onConnected finsihed");
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-
+        Log.i("runnin", "onConnectionSuspended start");
     }
 
     @Override
@@ -155,6 +169,7 @@ public class OurGoogleMap extends FragmentActivity implements
      * start a Google Play services activity that can resolve
      * error.
      */
+        Log.i("runnin", "onConnectionFailed start");
         if (connectionResult.hasResolution()) {
             try {
                 // Start an Activity that tries to resolve the error
@@ -174,14 +189,19 @@ public class OurGoogleMap extends FragmentActivity implements
          */
             Log.i(TAG, "Location services connection failed with code " + connectionResult.getErrorCode());
         }
+        Log.i("runnin", "onConnectionFailed finsih");
     }
 
     @Override
     public void onLocationChanged(Location location) {
+        Log.i("runnin", "********onLocationChanged start");
         handleNewLocation(location);
+        Log.i("runnin", "********onLocationChanged finish");
+
     }
 
     public void handleNewLocation(Location location) {
+        Log.i("runnin", "handleNewLocation start");
         Log.d(TAG, location.toString());
         double currentLatitude = location.getLatitude();
         double currentLongitude = location.getLongitude();
@@ -204,6 +224,7 @@ public class OurGoogleMap extends FragmentActivity implements
         int duration = Toast.LENGTH_SHORT;
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();
+        Log.i("runnin", "handleNewLocation finish");
     }
 
     private void drawCircle( LatLng location ) {
@@ -213,7 +234,7 @@ public class OurGoogleMap extends FragmentActivity implements
         CircleOptions options = new CircleOptions();
         options.center(location);
         //Radius in meters
-        double radius = Globals.getMaximumRadius() *1000;
+        double radius = Globals.getMaximumRadius() * 1000;
         options.radius(radius);
         options.strokeWidth(10);
         mMap.addCircle(options);
@@ -236,6 +257,7 @@ public class OurGoogleMap extends FragmentActivity implements
     }
 
     public void handleStart(Location location) {
+        Log.i("runnin", "handleStart start");
         Log.d(TAG, location.toString());
         double currentLatitude = location.getLatitude();
         double currentLongitude = location.getLongitude();
@@ -246,11 +268,13 @@ public class OurGoogleMap extends FragmentActivity implements
             Globals.setCurrentLocation(latLng);
         }
 
-        placeMarker(latLng, Icon.BIKER);
+        placeMarker(latLng, Icon.START_FLAG);
         zoomLevel = 15; //This goes up to 21
         drawCircle(latLng);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
         generateRandomPath(location);
+        handleNewLocation(location);
+        Log.i("runnin", "handleStart finsih");
     }
 
     private void generateRandomPath(Location location)
@@ -260,33 +284,57 @@ public class OurGoogleMap extends FragmentActivity implements
 
     private void placeMarker(LatLng latLng, Icon i)
     {
+        int deviceW = getResources().getDisplayMetrics().widthPixels;
+        int deviceH = getResources().getDisplayMetrics().heightPixels;
+        int scale = Math.min(deviceH,deviceW);
+        Log.i("size", "width = " + deviceW + " and height = " + deviceH);
+        int newWidth = scale/15;
+        int newHeight = scale/15;
+        Log.i("size", "width = " + newWidth + " and height = " + newHeight);
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.title("Position");
-        Bitmap.Config conf = Bitmap.Config.ARGB_8888;
-        Bitmap bmp = Bitmap.createBitmap(80, 80, conf);
+        Bitmap b;
 
         switch(i)
         {
             case START_FLAG:
-                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                b = resizeBitmap(R.drawable.start_flag, newWidth, newHeight);
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(b));
                 startLocation = mMap.addMarker(markerOptions);
-                break;
+                return;
             case BIKER:
-                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.biker));
+                //markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.biker));
+                b = resizeBitmap(R.drawable.biker, newWidth, newHeight);
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(b));
                 break;
             case HIKER:
-                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.hiker));
+                b = resizeBitmap(R.drawable.hiker, newWidth, newHeight);
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(b));
                 break;
             case RUN_MAN:
-                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.run_man));
+                b = resizeBitmap(R.drawable.run_man, newWidth, newHeight);
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(b));
                 break;
             case WALK_MAN:
-                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.walk_man));
+                b = resizeBitmap(R.drawable.walk_man, newWidth, newHeight);
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(b));
                 break;
             case FINISH_FLAG:
+                b = resizeBitmap(R.drawable.finish_flag, newWidth, newHeight);
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(b));
+                finishLocation = mMap.addMarker(markerOptions);
+                return;
         }
         mCurrLocation = mMap.addMarker(markerOptions);
     }
+
+    private Bitmap resizeBitmap(int id, int w, int h)
+    {
+        Bitmap bitMap = BitmapFactory.decodeResource(getResources(),id,null);
+        Bitmap resized = Bitmap.createScaledBitmap(bitMap, w, h, true);
+        return resized;
+    }
+
 
 }
