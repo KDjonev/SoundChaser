@@ -1,6 +1,8 @@
 package cs48.soundchaser;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
 
@@ -19,11 +21,13 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.Marker;
 
 public class OurGoogleMap extends FragmentActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -42,12 +46,16 @@ public class OurGoogleMap extends FragmentActivity implements
     private float zoomLevel;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
+    Marker mCurrLocation;
+    Marker startLocation;
+    protected int mDpi = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_google_map);
         setUpMapIfNeeded();
+        mDpi = getResources().getDisplayMetrics().densityDpi;
 
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -186,12 +194,10 @@ public class OurGoogleMap extends FragmentActivity implements
         {
             Globals.setCurrentLocation(latLng);
         }
-
-        mMap.addMarker(new MarkerOptions().position(new LatLng(currentLatitude, currentLongitude)).title("Current Location"));
-        MarkerOptions options = new MarkerOptions()
-                .position(latLng)
-                .title("I am here!");
-        mMap.addMarker(options);
+        if (mCurrLocation != null) {
+            mCurrLocation.remove();
+        }
+        placeMarker(latLng, Icon.RUN_MAN);
         //debbug
         Context context = getApplicationContext();
         CharSequence text = "new Location!";
@@ -240,11 +246,7 @@ public class OurGoogleMap extends FragmentActivity implements
             Globals.setCurrentLocation(latLng);
         }
 
-        mMap.addMarker(new MarkerOptions().position(new LatLng(currentLatitude, currentLongitude)).title("Start Location"));
-        MarkerOptions options = new MarkerOptions()
-                .position(latLng)
-                .title("Start from here!");
-        mMap.addMarker(options);
+        placeMarker(latLng, Icon.BIKER);
         zoomLevel = 15; //This goes up to 21
         drawCircle(latLng);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
@@ -255,4 +257,36 @@ public class OurGoogleMap extends FragmentActivity implements
     {
         RandomPathGenerator r = new RandomPathGenerator(location, this, mMap);
     }
+
+    private void placeMarker(LatLng latLng, Icon i)
+    {
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title("Position");
+        Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+        Bitmap bmp = Bitmap.createBitmap(80, 80, conf);
+
+        switch(i)
+        {
+            case START_FLAG:
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                startLocation = mMap.addMarker(markerOptions);
+                break;
+            case BIKER:
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.biker));
+                break;
+            case HIKER:
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.hiker));
+                break;
+            case RUN_MAN:
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.run_man));
+                break;
+            case WALK_MAN:
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.walk_man));
+                break;
+            case FINISH_FLAG:
+        }
+        mCurrLocation = mMap.addMarker(markerOptions);
+    }
+
 }
