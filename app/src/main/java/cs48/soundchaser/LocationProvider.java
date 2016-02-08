@@ -41,6 +41,7 @@ public class LocationProvider implements
     private Context mContext;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
+    private Location currentLocation;
 
     public LocationProvider(Context context, LocationCallback callback) {
         mGoogleApiClient = new GoogleApiClient.Builder(context)
@@ -79,6 +80,7 @@ public class LocationProvider implements
             if (location == null) {
                 LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
             } else {
+                currentLocation = location;
                 mLocationCallback.handleNewLocation(location);
             }
         }
@@ -126,5 +128,9 @@ public class LocationProvider implements
     @Override
     public void onLocationChanged(Location location) {
         mLocationCallback.handleNewLocation(location);
+    }
+
+    public Location getCurrentLocation() {
+        return currentLocation;
     }
 }

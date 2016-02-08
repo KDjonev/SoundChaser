@@ -13,9 +13,19 @@ public class Globals {
     private static double distanceToRun = 1;
     private static double maximumRadius = 0.5;
     private static boolean drawRadius = true;
+    private static boolean customDestination = false;
     private static LatLng startLocation = null;
     private static LatLng currentLocation = null;
     private static List<LatLng> listOfLocations = new ArrayList<LatLng>();
+
+    public static void init(double d, double m, boolean c)
+    {
+        setDistanceToRun(d);
+        setMaximumRadius(m);
+        setDrawRadius(true);
+        setCustomDestination(c);
+        listOfLocations = new ArrayList<LatLng>();
+    }
 
     public static List<LatLng> getListOfLocations() {
         return listOfLocations;
@@ -66,5 +76,14 @@ public class Globals {
 
     public static void setDrawRadius(boolean drawRadius) {
         Globals.drawRadius = drawRadius;
+    }
+
+    public static void setCustomDestination(boolean c)
+    {
+        customDestination = c;
+    }
+    public static boolean getCustomDestination()
+    {
+        return customDestination;
     }
 }

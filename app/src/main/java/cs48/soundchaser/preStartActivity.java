@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -16,6 +16,7 @@ public class preStartActivity extends Activity {
 
     private double distance = 5;
     private double radius = 2.5;
+    private boolean customDestination = false;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,7 +30,7 @@ public class preStartActivity extends Activity {
         //Log.v("input", "radius: " + Double.toString(radius));
         if (distance <= 0 || radius < 0) {
             return false;
-        } else if (radius > (distance / 2.0)) {
+        } else if (!customDestination && (radius > (distance / 2.0))) {
             radius = distance / 2.0;
             ((EditText) findViewById(R.id.radius)).setText(Double.toString(radius));
         }
@@ -46,7 +47,10 @@ public class preStartActivity extends Activity {
     }
 
     public void startActivity(View v) {
+        CheckBox c = (CheckBox)findViewById(R.id.customDestination);
+        customDestination = c.isChecked();
         if (validateInput()) {
+            Globals.init(distance,radius, customDestination);
             Intent i = new Intent(this, OurGoogleMap.class);
             startActivity(i);
         } else {
@@ -73,6 +77,11 @@ public class preStartActivity extends Activity {
     public double getDistance()
     {
         return distance;
+    }
+
+    public boolean getCustomDestination()
+    {
+        return customDestination;
     }
 }
 
