@@ -62,7 +62,8 @@
         android:layout_toEndOf="@+id/startButton"
         android:editable="true"
         android:clickable="false"
-        android:onClick="editDistance" />
+        android:onClick="editDistance"
+        android:imeOptions= "actionNext"/>
 
     <EditText
         android:layout_width="wrap_content"
@@ -77,7 +78,8 @@
         android:layout_toRightOf="@+id/startButton"
         android:clickable="false"
         android:editable="true"
-        android:onClick="editRadius" />
+        android:onClick="editRadius"
+        android:imeOptions= "actionDone"/>
 
     <CheckBox
         android:layout_width="wrap_content"

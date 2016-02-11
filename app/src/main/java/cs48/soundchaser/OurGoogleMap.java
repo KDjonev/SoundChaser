@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 
 import android.content.IntentSender;
@@ -12,6 +14,11 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Display;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -30,6 +37,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.Marker;
+
+import java.io.IOException;
+import java.util.List;
 
 public class OurGoogleMap extends FragmentActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -52,6 +62,7 @@ public class OurGoogleMap extends FragmentActivity implements
     Marker startLocation;
     Marker finishLocation;
     protected int mDpi = 0;
+    String address;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -272,14 +283,23 @@ public class OurGoogleMap extends FragmentActivity implements
         zoomLevel = 15; //This goes up to 21
         drawCircle(latLng);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
-        generateRandomPath(location);
         handleNewLocation(location);
+        chooseDestination();
+
         Log.i("runnin", "handleStart finsih");
     }
 
-    private void generateRandomPath(Location location)
+    public void generateRandomPath(View v)
     {
-        RandomPathGenerator r = new RandomPathGenerator(location, this, mMap);
+        if(finishLocation != null) {
+            RandomPathGenerator r = new RandomPathGenerator(mCurrLocation.getPosition(), this, mMap);
+            makeGone();
+
+        }
+        else
+        {
+            Toast.makeText(getBaseContext(), "You must chose a destination", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void placeMarker(LatLng latLng, Icon i)
@@ -288,8 +308,8 @@ public class OurGoogleMap extends FragmentActivity implements
         int deviceH = getResources().getDisplayMetrics().heightPixels;
         int scale = Math.min(deviceH,deviceW);
         Log.i("size", "width = " + deviceW + " and height = " + deviceH);
-        int newWidth = scale/15;
-        int newHeight = scale/15;
+        int newWidth = scale/10;
+        int newHeight = scale/10;
         Log.i("size", "width = " + newWidth + " and height = " + newHeight);
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
@@ -301,6 +321,7 @@ public class OurGoogleMap extends FragmentActivity implements
             case START_FLAG:
                 b = resizeBitmap(R.drawable.start_flag, newWidth, newHeight);
                 markerOptions.icon(BitmapDescriptorFactory.fromBitmap(b));
+                markerOptions.title("Start Position");
                 startLocation = mMap.addMarker(markerOptions);
                 return;
             case BIKER:
@@ -321,8 +342,12 @@ public class OurGoogleMap extends FragmentActivity implements
                 markerOptions.icon(BitmapDescriptorFactory.fromBitmap(b));
                 break;
             case FINISH_FLAG:
+                if (finishLocation != null) {
+                    finishLocation.remove();
+                }
                 b = resizeBitmap(R.drawable.finish_flag, newWidth, newHeight);
                 markerOptions.icon(BitmapDescriptorFactory.fromBitmap(b));
+                markerOptions.title("End Position");
                 finishLocation = mMap.addMarker(markerOptions);
                 return;
         }
@@ -336,5 +361,96 @@ public class OurGoogleMap extends FragmentActivity implements
         return resized;
     }
 
+    private  void chooseDestination()
+    {
+        if(Globals.getCustomDestination() == false)
+        {
+
+            placeMarker(startLocation.getPosition(), Icon.FINISH_FLAG);
+            Button confirmB = (Button)findViewById(R.id.confrimButton);
+            confirmB.performClick();
+            makeGone();
+            return;
+        }
+        makeVisible();
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+
+            @Override
+            public void onMapClick(LatLng latLng) {
+
+                placeMarker(latLng, Icon.FINISH_FLAG);
+            }
+        });
+
+    }
+
+    public void handleAddress(View v)
+    {
+        if(validateAddress()) {
+            clearKeyboard();
+        }
+    }
+
+    private void makeGone()
+    {
+        findViewById(R.id.addressText).setVisibility(View.GONE);
+        findViewById(R.id.addressButton).setVisibility(View.GONE);
+        findViewById(R.id.confrimButton).setVisibility(View.GONE);
+        clearKeyboard();
+    }
+
+    private  void makeVisible()
+    {
+        findViewById(R.id.addressText).setVisibility(View.VISIBLE);
+        findViewById(R.id.addressButton).setVisibility(View.VISIBLE);
+        findViewById(R.id.confrimButton).setVisibility(View.VISIBLE);
+    }
+
+    private void clearKeyboard()
+    {
+        if (getCurrentFocus() != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
+    }
+
+    private boolean validateAddress()
+    {
+        address = ((EditText) findViewById(R.id.addressText)).getText().toString();
+        if(address!=null && !address.equals("")){
+            Geocoder geocoder = new Geocoder(getBaseContext());
+            List<Address> addresses = null;
+
+            try {
+                double currLat = mCurrLocation.getPosition().latitude;
+                double currLong = mCurrLocation.getPosition().longitude;
+                // Getting a maximum of 1 Address that matches the input text
+                addresses = geocoder.getFromLocationName(address, 1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (addresses == null || addresses.size() == 0) {
+                Toast.makeText(getBaseContext(), "No Location found", Toast.LENGTH_SHORT).show();
+            }
+
+            else
+            {
+                for (int i = 0; i < addresses.size(); i++) {
+
+                    Address address = (Address) addresses.get(i);
+
+                    // Creating an instance of GeoPoint, to display in Google Map
+                    LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+                    placeMarker(latLng, Icon.FINISH_FLAG);
+                }
+            }
+            return true;
+        }
+        else {
+            Toast.makeText(getBaseContext(), "Please enter a location first", Toast.LENGTH_SHORT).show();
+        }
+        return false;
+    }
 
 }

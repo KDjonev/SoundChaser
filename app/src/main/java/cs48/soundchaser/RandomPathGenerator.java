@@ -1,14 +1,10 @@
 package cs48.soundchaser;
 
 import android.content.Context;
-import android.location.Location;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 /**
  * Created by Krassi on 2/7/2016.
@@ -16,12 +12,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class RandomPathGenerator {
     private double distanceToRun;
     private double maxRadius;
-    private Location startLocation;
+    private LatLng startLatLng;
     private Context context;
     private GoogleMap mMap;
 
-    public RandomPathGenerator(Location startLocation, Context context, GoogleMap mMap) {
-        this.startLocation = startLocation;
+    public RandomPathGenerator(LatLng startLatLng, Context context, GoogleMap mMap) {
+        this.startLatLng = startLatLng;
         this.context = context;
         this.mMap = mMap;
         init();
