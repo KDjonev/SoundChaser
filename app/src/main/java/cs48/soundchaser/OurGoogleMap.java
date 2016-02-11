@@ -63,6 +63,7 @@ public class OurGoogleMap extends FragmentActivity implements
     Marker finishLocation;
     protected int mDpi = 0;
     String address;
+    boolean randomPathGenerationBegun = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -294,7 +295,7 @@ public class OurGoogleMap extends FragmentActivity implements
         if(finishLocation != null) {
             RandomPathGenerator r = new RandomPathGenerator(mCurrLocation.getPosition(), this, mMap);
             makeGone();
-
+            randomPathGenerationBegun = true;
         }
         else
         {
@@ -377,7 +378,10 @@ public class OurGoogleMap extends FragmentActivity implements
 
             @Override
             public void onMapClick(LatLng latLng) {
-
+                if(randomPathGenerationBegun)
+                {
+                    return;
+                }
                 placeMarker(latLng, Icon.FINISH_FLAG);
             }
         });
