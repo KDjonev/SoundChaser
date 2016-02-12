@@ -4,6 +4,9 @@ for particular custmizable peratmiters. We utilize the google maps API and our c
 end, the navigation system will also be revolutionaty. it will use the sound of your music to navigate you based on fadeing in
 each ear.
 
+**HOW TO RUN**
+After cloning the SoundChaser repo, open the project in Android Studio. In order for the Maps API key to work and have the map function properly, the provided debug.keystore file must be copied into the .android directory. The application can then be run on a device as explained [here](http://developer.android.com/training/basics/firstapp/running-app.html).
+
 **HOW TO USE**
 Apon launching SoundChaser, you have the settings bar at the top which you can use to view and cange your profile, view your
 past runs (TODO), change your settings (TODO) and read the help menu (TODO).
