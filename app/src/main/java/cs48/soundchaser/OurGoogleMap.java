@@ -1,6 +1,8 @@
 package cs48.soundchaser;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -31,6 +33,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -39,6 +42,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.Marker;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class OurGoogleMap extends FragmentActivity implements
@@ -64,6 +68,11 @@ public class OurGoogleMap extends FragmentActivity implements
     protected int mDpi = 0;
     String address;
     boolean randomPathGenerationBegun = false;
+    CircleOptions options;
+    Circle preLimCircle;
+    private ArrayList<LatLng> points; //added
+    Polyline line; //added
+    Location previusLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +81,7 @@ public class OurGoogleMap extends FragmentActivity implements
         setContentView(R.layout.activity_google_map);
         setUpMapIfNeeded();
         mDpi = getResources().getDisplayMetrics().densityDpi;
-
+        points = new ArrayList<LatLng>(); //added
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -83,9 +92,19 @@ public class OurGoogleMap extends FragmentActivity implements
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(9 * 1000)        // 9 seconds, in milliseconds
+                .setSmallestDisplacement(3F)   //3 meter
+                .setInterval(5 * 1000)        // 6 seconds, in milliseconds
                 .setFastestInterval(3 * 1000); // 3 second, in milliseconds
+        try {
+            mMap.setMyLocationEnabled(true);
+        }
+        catch(SecurityException e)
+        {
+            e.printStackTrace();
+        }
+        previusLocation = null;
         Log.i("runnin", "onCreate finished");
+
     }
 
     @Override
@@ -154,17 +173,18 @@ public class OurGoogleMap extends FragmentActivity implements
     public void onConnected(Bundle bundle) {
         Log.i("runnin", "onConnected start");
         try {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
             Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-
-            if (location == null) {
+            if(location == null)
+            {
                 LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
             }
-            else {
-                handleStart(location);
-            }
+            previusLocation = location;
+            handleStart(location);
         } catch (SecurityException e) {
             e.printStackTrace();
         }
+
         Log.i("runnin", "onConnected finsihed");
     }
 
@@ -204,10 +224,28 @@ public class OurGoogleMap extends FragmentActivity implements
         Log.i("runnin", "onConnectionFailed finsih");
     }
 
+    private boolean validChange(Location location)
+    {
+        if(previusLocation == null)
+        {
+            return true;
+        }
+        boolean v = false;
+        double disp = location.distanceTo(previusLocation);
+        if(disp < 50)
+        {
+            v = true;
+        }
+        previusLocation = location;
+        return v;
+    }
+
     @Override
     public void onLocationChanged(Location location) {
         Log.i("runnin", "********onLocationChanged start");
-        handleNewLocation(location);
+        if(validChange(location)) {
+            handleNewLocation(location);
+        }
         Log.i("runnin", "********onLocationChanged finish");
 
     }
@@ -230,6 +268,9 @@ public class OurGoogleMap extends FragmentActivity implements
             mCurrLocation.remove();
         }
         placeMarker(latLng, Icon.RUN_MAN);
+        points.add(latLng);
+        drawPath();
+        points.remove(0);
         //debbug
         Context context = getApplicationContext();
         CharSequence text = "new Location!";
@@ -239,17 +280,17 @@ public class OurGoogleMap extends FragmentActivity implements
         Log.i("runnin", "handleNewLocation finish");
     }
 
-    private void drawCircle( LatLng location ) {
+    private void drawCircle( LatLng location) {
         if (mMap == null || !Globals.getDrawRadius()) {
             return;
         }
-        CircleOptions options = new CircleOptions();
+        options = new CircleOptions();
         options.center(location);
         //Radius in meters
         double radius = Globals.getMaximumRadius() * 1000;
         options.radius(radius);
         options.strokeWidth(10);
-        mMap.addCircle(options);
+        preLimCircle = mMap.addCircle(options);
         Globals.setDrawRadius(false);
         radius = radius + radius/2;
         double scale = radius / 500;
@@ -258,14 +299,34 @@ public class OurGoogleMap extends FragmentActivity implements
 
     }
 
+    private void reScaleCircle( double radius) {
+        if (mMap == null) {
+            return;
+        }
+        if(preLimCircle != null)
+        {
+            preLimCircle.remove();
+        }
+        options.radius(radius);
+        preLimCircle =mMap.addCircle(options);
+        Globals.setMaximumRadius(radius / 1000);
+        radius = radius + radius/2;
+        double scale = radius / 500;
+        zoomLevel = (int) (16 - Math.log(scale) / Math.log(2));
+
+    }
+
     private void drawPath()
     {
+
         Polyline line = mMap.addPolyline(new PolylineOptions()
-                        .addAll(Globals.getListOfLocations())
+                        .addAll(points)
                         .width(12)
                         .color(Color.parseColor("#05b1fb"))//Google maps blue color
                         .geodesic(true)
         );
+        Toast.makeText(getBaseContext(), "Path Added", Toast.LENGTH_SHORT).show();
+
     }
 
     public void handleStart(Location location) {
@@ -284,15 +345,31 @@ public class OurGoogleMap extends FragmentActivity implements
         zoomLevel = 15; //This goes up to 21
         drawCircle(latLng);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
+        points.add(latLng);
         handleNewLocation(location);
         chooseDestination();
 
         Log.i("runnin", "handleStart finsih");
     }
 
+    private float getDistanceBetweenCurrentAndFinish()
+    {
+        if(mCurrLocation == null || finishLocation == null)
+        {
+            return (float)(Globals.getMaximumRadius()*1000);
+        }
+        float[] newR = new float[1];
+        Location.distanceBetween(mCurrLocation.getPosition().latitude, mCurrLocation.getPosition().longitude, finishLocation.getPosition().latitude, finishLocation.getPosition().longitude, newR);
+        //Toast.makeText(getBaseContext(), Float.toString(newR[0]), Toast.LENGTH_SHORT).show();
+        return newR[0];
+    }
+
     public void generateRandomPath(View v)
     {
         if(finishLocation != null) {
+            float newRadius = getDistanceBetweenCurrentAndFinish();
+            reScaleCircle(newRadius+100);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrLocation.getPosition(), zoomLevel));
             RandomPathGenerator r = new RandomPathGenerator(mCurrLocation.getPosition(), this, mMap);
             makeGone();
             randomPathGenerationBegun = true;
@@ -380,6 +457,7 @@ public class OurGoogleMap extends FragmentActivity implements
             public void onMapClick(LatLng latLng) {
                 if(randomPathGenerationBegun)
                 {
+                    mMap.setOnMapClickListener(null);
                     return;
                 }
                 placeMarker(latLng, Icon.FINISH_FLAG);
@@ -455,6 +533,20 @@ public class OurGoogleMap extends FragmentActivity implements
             Toast.makeText(getBaseContext(), "Please enter a location first", Toast.LENGTH_SHORT).show();
         }
         return false;
+    }
+
+    @Override
+    public void onBackPressed() {
+        new AlertDialog.Builder(this)
+                .setTitle("Really Exit?")
+                .setMessage("Are you sure you want to exit?")
+                .setNegativeButton(android.R.string.no, null)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface arg0, int arg1) {
+                        OurGoogleMap.super.onBackPressed();
+                    }
+                }).create().show();
     }
 
 }
