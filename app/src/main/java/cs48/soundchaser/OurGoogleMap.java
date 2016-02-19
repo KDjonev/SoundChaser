@@ -57,6 +57,7 @@ public class OurGoogleMap extends FragmentActivity implements
      * This code is returned in Activity.onActivityResult
      */
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+    private static final LatLng STORKE_TOWER = new LatLng(34.4126047, -119.8484183);
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private float zoomLevel;
@@ -371,6 +372,7 @@ public class OurGoogleMap extends FragmentActivity implements
             reScaleCircle(newRadius+100);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrLocation.getPosition(), zoomLevel));
             RandomPathGenerator r = new RandomPathGenerator(mCurrLocation.getPosition(), this, mMap);
+            r.generate(finishLocation.getPosition());
             makeGone();
             randomPathGenerationBegun = true;
         }
@@ -444,7 +446,7 @@ public class OurGoogleMap extends FragmentActivity implements
         if(Globals.getCustomDestination() == false)
         {
 
-            placeMarker(startLocation.getPosition(), Icon.FINISH_FLAG);
+            placeMarker(STORKE_TOWER,Icon.FINISH_FLAG);
             Button confirmB = (Button)findViewById(R.id.confrimButton);
             confirmB.performClick();
             makeGone();
