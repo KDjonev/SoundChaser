@@ -3,6 +3,7 @@ package cs48.soundchaser;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -13,6 +14,8 @@ import android.location.Location;
 import android.content.IntentSender;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Display;
@@ -20,9 +23,12 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -74,6 +80,12 @@ public class OurGoogleMap extends FragmentActivity implements
     private ArrayList<LatLng> points; //added
     Polyline line; //added
     Location previusLocation;
+    long timeWhenStopped = 0;
+    Chronometer Mchronometer;
+    PowerManager mgr;
+    PowerManager.WakeLock wakeLock;
+    boolean firstRun = true;
+    boolean ended = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +105,7 @@ public class OurGoogleMap extends FragmentActivity implements
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setSmallestDisplacement(3F)   //3 meter
+                .setSmallestDisplacement(5F)   //5 meter
                 .setInterval(5 * 1000)        // 6 seconds, in milliseconds
                 .setFastestInterval(3 * 1000); // 3 second, in milliseconds
         try {
@@ -104,21 +116,37 @@ public class OurGoogleMap extends FragmentActivity implements
             e.printStackTrace();
         }
         previusLocation = null;
+        Mchronometer = (Chronometer) findViewById(R.id.timer);
+        mgr = (PowerManager)getBaseContext().getSystemService(Context.POWER_SERVICE);
+        wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakeLock");
+        wakeLock.acquire();
         Log.i("runnin", "onCreate finished");
 
     }
 
     @Override
     protected void onResume() {
+        if(ended)
+        {
+            super.onResume();
+            setUpMapIfNeeded();
+            return;
+        }
         Log.i("runnin", "onResume start");
         super.onResume();
         setUpMapIfNeeded();
         mGoogleApiClient.connect();
+        wakeLock.acquire();
         Log.i("runnin", "onResume finish");
     }
 
     @Override
     protected void onPause() {
+        if(ended)
+        {
+            super.onPause();
+            return;
+        }
         Log.i("runnin", "onPause start");
         super.onPause();
 
@@ -126,6 +154,7 @@ public class OurGoogleMap extends FragmentActivity implements
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
             mGoogleApiClient.disconnect();
         }
+        wakeLock.release();
         Log.i("runnin", "onPause finsished");
     }
 
@@ -181,7 +210,10 @@ public class OurGoogleMap extends FragmentActivity implements
                 LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
             }
             previusLocation = location;
-            handleStart(location);
+            if(firstRun) {
+                handleStart(location);
+                firstRun = false;
+            }
         } catch (SecurityException e) {
             e.printStackTrace();
         }
@@ -375,6 +407,7 @@ public class OurGoogleMap extends FragmentActivity implements
             r.generate(finishLocation.getPosition());
             makeGone();
             randomPathGenerationBegun = true;
+            beginTimer();
         }
         else
         {
@@ -382,7 +415,7 @@ public class OurGoogleMap extends FragmentActivity implements
         }
     }
 
-    private void placeMarker(LatLng latLng, Icon i)
+    public void placeMarker(LatLng latLng, Icon i)
     {
         int deviceW = getResources().getDisplayMetrics().widthPixels;
         int deviceH = getResources().getDisplayMetrics().heightPixels;
@@ -509,7 +542,7 @@ public class OurGoogleMap extends FragmentActivity implements
                 double currLat = mCurrLocation.getPosition().latitude;
                 double currLong = mCurrLocation.getPosition().longitude;
                 // Getting a maximum of 1 Address that matches the input text
-                addresses = geocoder.getFromLocationName(address, 1);
+                addresses = geocoder.getFromLocationName(address, 5);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -520,14 +553,38 @@ public class OurGoogleMap extends FragmentActivity implements
 
             else
             {
+                Address fAddress = addresses.get(0);
+                //start Location
+                Location startLoc = new Location("");
+                startLoc.setLatitude(startLocation.getPosition().latitude);
+                startLoc.setLongitude(startLocation.getPosition().longitude);
+                //location of first postition
+                LatLng latLng = new LatLng(fAddress.getLatitude(), fAddress.getLongitude());
+                Location loc2 = new Location("");
+                loc2.setLatitude(latLng.latitude);
+                loc2.setLongitude(latLng.longitude);
+                //smallest distance
+                float minD = startLoc.distanceTo(loc2);
+
                 for (int i = 0; i < addresses.size(); i++) {
+                    Address tempAddress = (Address) addresses.get(i);
+                    latLng = new LatLng(tempAddress.getLatitude(), tempAddress.getLongitude());
 
-                    Address address = (Address) addresses.get(i);
+                    loc2 = new Location("");
+                    loc2.setLatitude(latLng.latitude);
+                    loc2.setLongitude(latLng.longitude);
 
-                    // Creating an instance of GeoPoint, to display in Google Map
-                    LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-                    placeMarker(latLng, Icon.FINISH_FLAG);
+                    float d = startLoc.distanceTo(loc2);
+
+                    if(d < minD)
+                    {
+                        fAddress = tempAddress;
+                    }
+
                 }
+                // Creating an instance of GeoPoint, to display in Google Map
+                latLng = new LatLng(fAddress.getLatitude(), fAddress.getLongitude());
+                placeMarker(latLng, Icon.FINISH_FLAG);
             }
             return true;
         }
@@ -548,7 +605,137 @@ public class OurGoogleMap extends FragmentActivity implements
                     public void onClick(DialogInterface arg0, int arg1) {
                         OurGoogleMap.super.onBackPressed();
                     }
+                }).setNeutralButton("Main Menu", new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface arg0, int arg1) {
+                Intent i = new Intent(getBaseContext(),MainActivity.class);
+                startActivity(i);
+                finish();
+            }
+        }).create().show();
+    }
+
+    private void beginTimer()
+    {
+        findViewById(R.id.timer).setVisibility(View.VISIBLE);
+        findViewById(R.id.endWorkoutButton).setVisibility(View.VISIBLE);
+        startTimer();
+    }
+
+    private void startTimer()
+    {
+        Mchronometer.setBase(SystemClock.elapsedRealtime()
+                + timeWhenStopped);
+        Mchronometer.start();
+    }
+
+    private void pauseTimer()
+    {
+        timeWhenStopped = Mchronometer.getBase() - SystemClock.elapsedRealtime();
+        Mchronometer.stop();
+    }
+
+    private void hideTimer()
+    {
+        pauseTimer();
+        findViewById(R.id.timer).setVisibility(View.GONE);
+        findViewById(R.id.endWorkoutButton).setVisibility(View.GONE);
+    }
+
+    private void resetTimer()
+    {
+        Mchronometer.setBase(SystemClock.elapsedRealtime());
+        Mchronometer.stop();
+        timeWhenStopped = 0;
+    }
+
+    private void confirmEnd()
+    {
+        new AlertDialog.Builder(this)
+                .setTitle("Really Finish?")
+                .setMessage("Are you sure you want to finish your workout?")
+                .setNegativeButton(android.R.string.no, null)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface arg0, int arg1) {
+                        endWorkout();
+                    }
                 }).create().show();
+    }
+
+    private void endWorkout()
+    {
+
+        removeRepeats();
+        ended = true;
+        mMap.clear();
+        placeMarker(Globals.getListOfLocations().get(0), Icon.START_FLAG);
+        placeMarker(Globals.getListOfLocations().get(Globals.getListOfLocations().size() - 1), Icon.FINISH_FLAG);
+        hideTimer();
+        float totalD = totalDistance();
+        findViewById(R.id.distanceRanText).setVisibility(View.VISIBLE);
+        findViewById(R.id.timeRanText).setVisibility(View.VISIBLE);
+        TextView dRT = ((TextView) findViewById(R.id.distanceRanText));
+        dRT.setText("Total Distance: " + Float.toString(totalD));
+        TextView tRT = ((TextView) findViewById(R.id.timeRanText));
+        long timeInMillis = SystemClock.elapsedRealtime() - Mchronometer.getBase();
+        long timeInSeconds = timeInMillis/1000;
+        int minutes = (int) (timeInSeconds/60);
+        int seconds = (int) (timeInSeconds%60);
+        if(seconds > 9) {
+            tRT.setText("Total Time: " + Integer.toString(minutes) + ":" + Integer.toString(seconds));
+        }
+        else
+        {
+            tRT.setText("Total Time: " + Integer.toString(minutes) + ":0" + Integer.toString(seconds));
+        }
+        if (mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+            mGoogleApiClient.disconnect();
+        }
+        wakeLock.release();
+        new postWorkoutActivity(timeWhenStopped, mMap);
+    }
+
+    public void endWorkout(View v)
+    {
+        confirmEnd();
+    }
+
+    private float distanceBetweenLatLngs(LatLng p1, LatLng p2)
+    {
+        //location of first postition
+        Location loc1 = new Location("");
+        loc1.setLatitude(p1.latitude);
+        loc1.setLongitude(p1.longitude);
+        //location of second postition
+        Location loc2 = new Location("");
+        loc2.setLatitude(p2.latitude);
+        loc2.setLongitude(p2.longitude);
+        //distance
+        float distance = loc1.distanceTo(loc2);
+        return distance;
+    }
+
+    private void removeRepeats()
+    {
+        for(int i = Globals.getListOfLocations().size()-1; i > 0;--i)
+        {
+            if(Globals.getListOfLocations().get(i).equals(Globals.getListOfLocations().get(i - 1)))
+            {
+                Globals.getListOfLocations().remove(i);
+            }
+        }
+    }
+
+    private float totalDistance()
+    {
+        float d = 0;
+        for(int i = 0; i < Globals.getListOfLocations().size()-2; ++i)
+        {
+            d+=distanceBetweenLatLngs(Globals.getListOfLocations().get(i), Globals.getListOfLocations().get(i+1));
+        }
+        return d;
     }
 
 }
