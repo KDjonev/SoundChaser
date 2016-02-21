@@ -693,7 +693,9 @@ public class OurGoogleMap extends FragmentActivity implements
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
             mGoogleApiClient.disconnect();
         }
-        wakeLock.release();
+        if(wakeLock.isHeld()) {
+            wakeLock.release();
+        }
         new postWorkoutActivity(timeWhenStopped, mMap);
     }
 
@@ -736,6 +738,14 @@ public class OurGoogleMap extends FragmentActivity implements
             d+=distanceBetweenLatLngs(Globals.getListOfLocations().get(i), Globals.getListOfLocations().get(i+1));
         }
         return d;
+    }
+
+    @Override
+    public void onDestroy()
+    {
+        super.onDestroy();
+        if (wakeLock.isHeld())
+            wakeLock.release();
     }
 
 }
