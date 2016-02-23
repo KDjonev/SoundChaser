@@ -51,8 +51,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.provider.Settings;
-
 public class OurGoogleMap extends FragmentActivity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -81,7 +79,6 @@ public class OurGoogleMap extends FragmentActivity implements
     CircleOptions options;
     Circle preLimCircle;
     private ArrayList<LatLng> points; //added
-    Polyline line; //added
     Location previusLocation;
     long timeWhenStopped = 0;
     Chronometer Mchronometer;
@@ -91,7 +88,7 @@ public class OurGoogleMap extends FragmentActivity implements
     boolean ended = false;
     PendingIntent mRequestLocationUpdatesPendingIntent;
     boolean foreground = true;
-    private ArrayList<Location> pendingLocations = new ArrayList<Location>();
+    boolean connected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,17 +148,11 @@ public class OurGoogleMap extends FragmentActivity implements
             loc.setLongitude(lon);
             if(foreground)
             {
-
-                if(pendingLocations.size() > 0)
-                {
-                    drawPath(pendingLocations);
-                }
                 onLocationChanged(loc);
             }
             else
             {
                 if(validChange(loc)) {
-                    pendingLocations.add(loc);
                     double currentLatitude = loc.getLatitude();
                     double currentLongitude = loc.getLongitude();
                     LatLng latLng = new LatLng(currentLatitude, currentLongitude);
@@ -193,6 +184,9 @@ public class OurGoogleMap extends FragmentActivity implements
         if(!mGoogleApiClient.isConnected())
             mGoogleApiClient.connect();
         foreground = true;
+        if(foreground && connected)
+            drawPath(Globals.getListOfLocations());
+
         //wakeLock.acquire();
         Log.i("runnin", "onResume finish");
     }
@@ -335,19 +329,11 @@ public class OurGoogleMap extends FragmentActivity implements
         }
         boolean val = false;
         double disp = location.distanceTo(previusLocation);
-        long time = location.getTime()-previusLocation.getTime();
-        time /= 1000;
-        double v = -1;
-        if(time != 0)
-        {
-            v = disp/time;
-        }
         if(disp < Globals.getaType().getValidDisp())
         {
             val = true;
         }
         previusLocation = location;
-        Toast.makeText(getBaseContext(), "v = " + Double.toString(v), Toast.LENGTH_SHORT).show();
         return val;
     }
 
@@ -378,16 +364,10 @@ public class OurGoogleMap extends FragmentActivity implements
         if (mCurrLocation != null) {
             mCurrLocation.remove();
         }
-        placeMarker(latLng, Icon.RUN_MAN);
+        placeMarker(latLng, Globals.getaType().getIcon());
         points.add(latLng);
         drawPath();
         points.remove(0);
-        //debbug
-        Context context = getApplicationContext();
-        CharSequence text = "new Location!";
-        int duration = Toast.LENGTH_SHORT;
-        Toast toast = Toast.makeText(context, text, duration);
-        toast.show();
         Log.i("runnin", "handleNewLocation finish");
     }
 
@@ -429,38 +409,39 @@ public class OurGoogleMap extends FragmentActivity implements
 
     private void drawPath()
     {
-
-        Polyline line = mMap.addPolyline(new PolylineOptions()
+        mMap.addPolyline(new PolylineOptions()
                         .addAll(points)
                         .width(12)
                         .color(Color.parseColor("#05b1fb"))//Google maps blue color
                         .geodesic(true)
         );
-        Toast.makeText(getBaseContext(), "Path Added", Toast.LENGTH_SHORT).show();
 
     }
 
-    private void drawPath(List<Location> l)
+    private void drawPath(List<LatLng> l)
     {
-        ArrayList<LatLng> tmp = new ArrayList<LatLng>();
-        if(l.size() > 0)
+        if(l.size() < 1)
         {
-            previusLocation = l.get(l.size()-1);
+            return;
         }
-        while(l.size() > 0)
-        {
-            LatLng nLatLng = new LatLng(l.get(0).getLatitude(),l.get(0).getLongitude());
-            tmp.add(nLatLng);
-            l.remove(0);
-        }
-
-        Polyline line = mMap.addPolyline(new PolylineOptions()
-                        .addAll(tmp)
+        mMap.clear();
+        mMap.addCircle(options);
+        placeMarker(l.get(l.size()-1), Globals.getaType().getIcon());
+        placeMarker(startLocation.getPosition(), Icon.START_FLAG);
+        placeMarker(finishLocation.getPosition(), Icon.FINISH_FLAG);
+        mMap.addPolyline(new PolylineOptions()
+                        .addAll(l)
                         .width(12)
                         .color(Color.parseColor("#05b1fb"))//Google maps blue color
                         .geodesic(true)
         );
-        Toast.makeText(getBaseContext(), "Large Path Added", Toast.LENGTH_SHORT).show();
+        if(l.get(l.size()-1) != null)
+        {
+            points.remove(0);
+            points.add(l.get(l.size() - 1));
+            previusLocation.setLatitude(l.get(l.size() - 1).latitude);
+            previusLocation.setLatitude(l.get(l.size()-1).longitude);
+        }
 
     }
 
@@ -483,7 +464,7 @@ public class OurGoogleMap extends FragmentActivity implements
         points.add(latLng);
         handleNewLocation(location);
         chooseDestination();
-
+        connected = true;
         Log.i("runnin", "handleStart finsih");
     }
 
