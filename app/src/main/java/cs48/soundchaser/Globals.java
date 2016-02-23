@@ -17,14 +17,24 @@ public class Globals {
     private static LatLng startLocation = null;
     private static LatLng currentLocation = null;
     private static List<LatLng> listOfLocations = new ArrayList<LatLng>();
+    private static ActivityType aType = ActivityType.DEFAULT;
 
-    public static void init(double d, double m, boolean c)
+    public static void init(double d, double m, boolean c, ActivityType aT)
     {
         setDistanceToRun(d);
         setMaximumRadius(m);
         setDrawRadius(true);
         setCustomDestination(c);
+        setaType(aT);
         listOfLocations = new ArrayList<LatLng>();
+    }
+
+    public static ActivityType getaType() {
+        return aType;
+    }
+
+    public static void setaType(ActivityType aType) {
+        Globals.aType = aType;
     }
 
     public static List<LatLng> getListOfLocations() {

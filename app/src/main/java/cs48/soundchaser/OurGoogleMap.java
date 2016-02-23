@@ -1,9 +1,13 @@
 package cs48.soundchaser;
 
 import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -12,15 +16,14 @@ import android.location.Geocoder;
 import android.location.Location;
 
 import android.content.IntentSender;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.Display;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.Chronometer;
@@ -28,16 +31,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -50,6 +50,8 @@ import com.google.android.gms.maps.model.Marker;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import android.provider.Settings;
 
 public class OurGoogleMap extends FragmentActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -73,6 +75,7 @@ public class OurGoogleMap extends FragmentActivity implements
     Marker startLocation;
     Marker finishLocation;
     protected int mDpi = 0;
+    NotificationManager mNotifyMgr;
     String address;
     boolean randomPathGenerationBegun = false;
     CircleOptions options;
@@ -86,6 +89,9 @@ public class OurGoogleMap extends FragmentActivity implements
     PowerManager.WakeLock wakeLock;
     boolean firstRun = true;
     boolean ended = false;
+    PendingIntent mRequestLocationUpdatesPendingIntent;
+    boolean foreground = true;
+    private ArrayList<Location> pendingLocations = new ArrayList<Location>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,9 +111,9 @@ public class OurGoogleMap extends FragmentActivity implements
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setSmallestDisplacement(5F)   //5 meter
-                .setInterval(5 * 1000)        // 6 seconds, in milliseconds
-                .setFastestInterval(3 * 1000); // 3 second, in milliseconds
+                .setSmallestDisplacement(Globals.getaType().getSmallestDisp())   //5 meter
+                .setInterval(Globals.getaType().getInterval())        // 5 seconds, in milliseconds
+                .setFastestInterval(Globals.getaType().getFastestInterval()); // 3 second, in milliseconds
         try {
             mMap.setMyLocationEnabled(true);
         }
@@ -120,41 +126,94 @@ public class OurGoogleMap extends FragmentActivity implements
         mgr = (PowerManager)getBaseContext().getSystemService(Context.POWER_SERVICE);
         wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakeLock");
         wakeLock.acquire();
+
+        // Register to receive messages.
+        // We are registering an observer (mMessageReceiver) to receive Intents
+        // with actions named "custom-event-name".
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("LocationChanged"));
+        setUpNotification();
         Log.i("runnin", "onCreate finished");
 
     }
 
+
+    // Our handler for received Intents. This will be called whenever an Intent
+// with an action named "custom-event-name" is broadcasted.
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Get extra data included in the Intent
+            Double lat = intent.getDoubleExtra("lat", 0);
+            Double lon = intent.getDoubleExtra("lon", 0);
+            Location loc = new Location("");
+            loc.setLatitude(lat);
+            loc.setLongitude(lon);
+            if(foreground)
+            {
+
+                if(pendingLocations.size() > 0)
+                {
+                    drawPath(pendingLocations);
+                }
+                onLocationChanged(loc);
+            }
+            else
+            {
+                if(validChange(loc)) {
+                    pendingLocations.add(loc);
+                    double currentLatitude = loc.getLatitude();
+                    double currentLongitude = loc.getLongitude();
+                    LatLng latLng = new LatLng(currentLatitude, currentLongitude);
+                    if(Globals.getStartLocation() == null)
+                    {
+                        Globals.setStartLocation(latLng);
+                    }
+                    else
+                    {
+                        Globals.setCurrentLocation(latLng);
+                    }
+                }
+            }
+
+            Log.i("locationtesting", "location recieved: " + " lat: " + loc.getLatitude() + " lon: " + loc.getLongitude());
+        }
+    };
+
     @Override
     protected void onResume() {
+        super.onResume();
+        Log.i("runnin", "onResume start");
         if(ended)
         {
-            super.onResume();
             setUpMapIfNeeded();
             return;
         }
-        Log.i("runnin", "onResume start");
-        super.onResume();
         setUpMapIfNeeded();
-        mGoogleApiClient.connect();
-        wakeLock.acquire();
+        if(!mGoogleApiClient.isConnected())
+            mGoogleApiClient.connect();
+        foreground = true;
+        //wakeLock.acquire();
         Log.i("runnin", "onResume finish");
     }
 
     @Override
     protected void onPause() {
+        super.onPause();
+        Log.i("runnin", "onPause start");
         if(ended)
         {
-            super.onPause();
             return;
         }
-        Log.i("runnin", "onPause start");
-        super.onPause();
 
+        foreground = false;
+        /*
         if (mGoogleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, mRequestLocationUpdatesPendingIntent);
             mGoogleApiClient.disconnect();
         }
-        wakeLock.release();
+        */
+        //wakeLock.release();
         Log.i("runnin", "onPause finsished");
     }
 
@@ -203,11 +262,22 @@ public class OurGoogleMap extends FragmentActivity implements
     public void onConnected(Bundle bundle) {
         Log.i("runnin", "onConnected start");
         try {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+            // create the Intent to use WebViewActivity to handle results
+            Intent mRequestLocationUpdatesIntent = new Intent(this, LocationUpdateService.class);
+
+            // create a PendingIntent
+            mRequestLocationUpdatesPendingIntent = PendingIntent.getService(getApplicationContext(), 0,
+                    mRequestLocationUpdatesIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
+
+            // request location updates
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
+                    mLocationRequest,
+                    mRequestLocationUpdatesPendingIntent);
             Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
             if(location == null)
             {
-                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+                //LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
             }
             previusLocation = location;
             if(firstRun) {
@@ -263,14 +333,22 @@ public class OurGoogleMap extends FragmentActivity implements
         {
             return true;
         }
-        boolean v = false;
+        boolean val = false;
         double disp = location.distanceTo(previusLocation);
-        if(disp < 50)
+        long time = location.getTime()-previusLocation.getTime();
+        time /= 1000;
+        double v = -1;
+        if(time != 0)
         {
-            v = true;
+            v = disp/time;
+        }
+        if(disp < Globals.getaType().getValidDisp())
+        {
+            val = true;
         }
         previusLocation = location;
-        return v;
+        Toast.makeText(getBaseContext(), "v = " + Double.toString(v), Toast.LENGTH_SHORT).show();
+        return val;
     }
 
     @Override
@@ -359,6 +437,30 @@ public class OurGoogleMap extends FragmentActivity implements
                         .geodesic(true)
         );
         Toast.makeText(getBaseContext(), "Path Added", Toast.LENGTH_SHORT).show();
+
+    }
+
+    private void drawPath(List<Location> l)
+    {
+        ArrayList<LatLng> tmp = new ArrayList<LatLng>();
+        if(l.size() > 0)
+        {
+            previusLocation = l.get(l.size()-1);
+        }
+        while(l.size() > 0)
+        {
+            LatLng nLatLng = new LatLng(l.get(0).getLatitude(),l.get(0).getLongitude());
+            tmp.add(nLatLng);
+            l.remove(0);
+        }
+
+        Polyline line = mMap.addPolyline(new PolylineOptions()
+                        .addAll(tmp)
+                        .width(12)
+                        .color(Color.parseColor("#05b1fb"))//Google maps blue color
+                        .geodesic(true)
+        );
+        Toast.makeText(getBaseContext(), "Large Path Added", Toast.LENGTH_SHORT).show();
 
     }
 
@@ -603,12 +705,16 @@ public class OurGoogleMap extends FragmentActivity implements
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface arg0, int arg1) {
-                        OurGoogleMap.super.onBackPressed();
+                        Intent intent = new Intent(Intent.ACTION_MAIN);
+                        intent.addCategory(Intent.CATEGORY_HOME);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        finish();
                     }
                 }).setNeutralButton("Main Menu", new DialogInterface.OnClickListener() {
 
             public void onClick(DialogInterface arg0, int arg1) {
-                Intent i = new Intent(getBaseContext(),MainActivity.class);
+                Intent i = new Intent(getBaseContext(), MainActivity.class);
                 startActivity(i);
                 finish();
             }
@@ -689,14 +795,9 @@ public class OurGoogleMap extends FragmentActivity implements
         {
             tRT.setText("Total Time: " + Integer.toString(minutes) + ":0" + Integer.toString(seconds));
         }
-        if (mGoogleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-            mGoogleApiClient.disconnect();
-        }
-        if(wakeLock.isHeld()) {
-            wakeLock.release();
-        }
         new postWorkoutActivity(timeWhenStopped, mMap);
+        returnRescourses();
+
     }
 
     public void endWorkout(View v)
@@ -744,8 +845,45 @@ public class OurGoogleMap extends FragmentActivity implements
     public void onDestroy()
     {
         super.onDestroy();
+        returnRescourses();
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+    }
+
+    private void returnRescourses()
+    {
         if (wakeLock.isHeld())
             wakeLock.release();
+        // Unregister since the activity is about to be closed.
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, mRequestLocationUpdatesPendingIntent);
+        mRequestLocationUpdatesPendingIntent.cancel();
+        mNotifyMgr.cancel(001);
+    }
+
+    private void setUpNotification()
+    {
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.sound_chaser_icon)
+                        .setContentTitle("SoundChaser")
+                        .setContentText("Chase Away!");
+        final Intent resultIntent = new Intent(this, OurGoogleMap.class);
+        resultIntent.setAction(Intent.ACTION_MAIN);
+        resultIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        resultIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(this,0,resultIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+        mBuilder.setContentIntent(resultPendingIntent);
+        mBuilder.setOngoing(true);
+        // Sets an ID for the notification
+        int mNotificationId = 001;
+        // Gets an instance of the NotificationManager service
+        mNotifyMgr =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // Builds the notification and issues it.
+        mNotifyMgr.notify(mNotificationId, mBuilder.build());
     }
 
 }

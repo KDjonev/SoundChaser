@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.startActivityButton :
             i = new Intent(this, preStartActivity.class);
             startActivity(i);
+                finish();
             break;
         }
     }

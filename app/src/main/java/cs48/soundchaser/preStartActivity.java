@@ -1,13 +1,16 @@
 package cs48.soundchaser;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
+import android.provider.Settings;
 
 /**
  * Created by Krassi on 2/7/2016.
@@ -21,6 +24,41 @@ public class preStartActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.pre_start_activity);
+    }
+
+    private void gpsCheck()
+    {
+        int off = 0;
+        try {
+            off = Settings.Secure.getInt(getContentResolver(), Settings.Secure.LOCATION_MODE);
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+        }
+        if(off==0){
+            new AlertDialog.Builder(this)
+                    .setTitle("Turn Location On?")
+                    .setMessage("You must turn On your Location.")
+                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+
+                        public void onClick(DialogInterface arg0, int arg1) {
+                            onBackPressed();
+                        }
+                    })
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                        public void onClick(DialogInterface arg0, int arg1) {
+                            Intent onGPS = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            startActivity(onGPS);
+                        }
+                    }).create().show();
+        }
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        gpsCheck();
     }
 
     private boolean validateInput() {
@@ -50,13 +88,20 @@ public class preStartActivity extends Activity {
         CheckBox c = (CheckBox)findViewById(R.id.customDestination);
         customDestination = c.isChecked();
         if (validateInput()) {
-            Globals.init(distance,radius, customDestination);
+            Globals.init(distance,radius, customDestination, ActivityType.DEFAULT);
             Intent i = new Intent(this, OurGoogleMap.class);
             startActivity(i);
+            finish();
         } else {
             incorrectInput();
         }
 
+    }
+
+    public void onBackPressed() {
+        Intent i = new Intent(getBaseContext(),MainActivity.class);
+        startActivity(i);
+        finish();
     }
 
     public void editDistance(View v) {
