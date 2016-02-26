@@ -578,6 +578,7 @@ public class OurGoogleMap extends FragmentActivity implements
                     mMap.setOnMapClickListener(null);
                     return;
                 }
+                clearKeyboard();
                 placeMarker(latLng, Icon.FINISH_FLAG);
             }
         });
@@ -686,6 +687,7 @@ public class OurGoogleMap extends FragmentActivity implements
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface arg0, int arg1) {
+                        returnRescourses();
                         Intent intent = new Intent(Intent.ACTION_MAIN);
                         intent.addCategory(Intent.CATEGORY_HOME);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -695,6 +697,7 @@ public class OurGoogleMap extends FragmentActivity implements
                 }).setNeutralButton("Main Menu", new DialogInterface.OnClickListener() {
 
             public void onClick(DialogInterface arg0, int arg1) {
+                returnRescourses();
                 Intent i = new Intent(getBaseContext(), MainActivity.class);
                 startActivity(i);
                 finish();
@@ -776,7 +779,8 @@ public class OurGoogleMap extends FragmentActivity implements
         {
             tRT.setText("Total Time: " + Integer.toString(minutes) + ":0" + Integer.toString(seconds));
         }
-        new postWorkoutActivity(timeWhenStopped, mMap);
+        LocationsDB db = new LocationsDB(this);
+        new postWorkoutActivity(timeInSeconds, mMap, totalD, db);
         returnRescourses();
 
     }

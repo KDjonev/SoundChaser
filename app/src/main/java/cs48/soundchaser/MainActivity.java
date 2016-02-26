@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.viewData :
                 i = new Intent(this, ViewData.class);
                 startActivity(i);
+                finish();
                 break;
             case R.id.help :
                 i = new Intent(this, Help.class);
