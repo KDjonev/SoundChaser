@@ -16,7 +16,7 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Distance to run (km):"
         android:id="@+id/textView2"
-        android:textSize="30dp"
+        android:textSize="28dp"
         android:layout_weight="0.01"
         android:layout_below="@+id/space"
         android:layout_alignParentLeft="true"
@@ -28,11 +28,11 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Radius to stay within (km):"
         android:id="@+id/textView3"
-        android:textSize="30dp"
+        android:textSize="28dp"
         android:layout_below="@+id/textView2"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginTop="39dp" />
+        android:paddingTop="10dp" />
 
     <Button
         android:layout_width="179dp"
@@ -54,7 +54,7 @@
         android:ems="10"
         android:id="@+id/distance"
         android:text="@string/distance"
-        android:textSize="40dp"
+        android:textSize="30dp"
         android:layout_alignTop="@+id/textView2"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
@@ -72,14 +72,15 @@
         android:ems="10"
         android:id="@+id/radius"
         android:text="@string/radius"
-        android:textSize="40dp"
+        android:textSize="30dp"
         android:layout_alignTop="@+id/textView3"
         android:layout_toEndOf="@+id/startButton"
         android:layout_toRightOf="@+id/startButton"
         android:clickable="false"
         android:editable="true"
         android:onClick="editRadius"
-        android:imeOptions= "actionDone"/>
+        android:imeOptions= "actionDone"
+        android:paddingTop="10dp" />
 
     <CheckBox
         android:layout_width="wrap_content"
@@ -87,8 +88,19 @@
         android:text="Custom Destination"
         android:id="@+id/customDestination"
         android:checked="false"
-        android:textSize="30dp"
+        android:textSize="28dp"
         android:layout_above="@+id/startButton"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:paddingTop="10dp" />
+
+    <Spinner
+        android:id="@+id/activitySpinner"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:prompt="@string/activitySpin"
+        android:layout_below="@+id/textView3"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:paddingTop="10dp" />
 
 </RelativeLayout>

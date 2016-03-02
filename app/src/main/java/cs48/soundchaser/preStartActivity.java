@@ -11,19 +11,78 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 import android.provider.Settings;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.AdapterView.OnItemSelectedListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Krassi on 2/7/2016.
  */
-public class preStartActivity extends Activity {
+public class preStartActivity extends Activity implements OnItemSelectedListener{
 
     private double distance = 5;
     private double radius = 2.5;
     private boolean customDestination = false;
+    private ActivityType aT = ActivityType.DEFAULT;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.pre_start_activity);
+        addSpinnerStuff();
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        // On selecting a spinner item
+        String item = parent.getItemAtPosition(position).toString();
+        switch (item){
+            case "Walking":
+                aT = ActivityType.WALKING;
+                break;
+            case "Running":
+                aT = ActivityType.RUNNING;
+                break;
+            case "Biking":
+                aT = ActivityType.BIKING;
+                break;
+            default:
+                aT = ActivityType.DEFAULT;
+        }
+
+        // Showing selected spinner item
+        Toast.makeText(parent.getContext(), "Selected: " + item, Toast.LENGTH_LONG).show();
+    }
+    public void onNothingSelected(AdapterView<?> arg0) {
+        // TODO Auto-generated method stub
+    }
+
+    private void addSpinnerStuff()
+    {
+        // Spinner element
+        Spinner spinner = (Spinner) findViewById(R.id.activitySpinner);
+
+        // Spinner click listener
+        spinner.setOnItemSelectedListener(this);
+
+        // Spinner Drop down elements
+        List<String> categories = new ArrayList<String>();
+        categories.add("Default");
+        categories.add("Walking");
+        categories.add("Running");
+        categories.add("Biking");
+
+        // Creating adapter for spinner
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, R.layout.spinner_layout, categories);
+
+        // Drop down layout style - list view with radio button
+        dataAdapter.setDropDownViewResource(R.layout.spinner_layout);
+
+        // attaching data adapter to spinner
+        spinner.setAdapter(dataAdapter);
     }
 
     private void gpsCheck()
@@ -88,7 +147,7 @@ public class preStartActivity extends Activity {
         CheckBox c = (CheckBox)findViewById(R.id.customDestination);
         customDestination = c.isChecked();
         if (validateInput()) {
-            Globals.init(distance,radius, customDestination, ActivityType.DEFAULT);
+            Globals.init(distance,radius, customDestination, aT);
             Intent i = new Intent(this, OurGoogleMap.class);
             startActivity(i);
             finish();

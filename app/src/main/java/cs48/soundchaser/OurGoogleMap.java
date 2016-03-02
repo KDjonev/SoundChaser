@@ -19,6 +19,8 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.provider.*;
+import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -63,7 +65,7 @@ public class OurGoogleMap extends FragmentActivity implements
      * This code is returned in Activity.onActivityResult
      */
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-    private static final LatLng STORKE_TOWER = new LatLng(34.4126047, -119.8484183);
+    //private static final LatLng STORKE_TOWER = new LatLng(34.4126047, -119.8484183);
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private float zoomLevel;
@@ -89,6 +91,7 @@ public class OurGoogleMap extends FragmentActivity implements
     PendingIntent mRequestLocationUpdatesPendingIntent;
     boolean foreground = true;
     boolean connected = false;
+    RandomPathGenerator r;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -387,7 +390,14 @@ public class OurGoogleMap extends FragmentActivity implements
         double scale = radius / 500;
         zoomLevel = (int) (16 - Math.log(scale) / Math.log(2));
 
-
+        /* JUST A TEST FOR RANDOM POINT, RADIUS MUST BE LESS THAN DISTTORUN, CLICK CUSTOM DEST
+        for (int i = 0; i < 100; i++) {
+            RandomPoint pt = new RandomPoint(Globals.getCurrentLocation(), Globals.getMaximumRadius());
+            mMap.addMarker(new MarkerOptions()
+                    .position(pt.getCoordinates())
+                    .title("Hello world"));
+        }
+         TEST ENDS HERE */
     }
 
     private void reScaleCircle( double radius) {
@@ -426,7 +436,7 @@ public class OurGoogleMap extends FragmentActivity implements
         }
         mMap.clear();
         mMap.addCircle(options);
-        placeMarker(l.get(l.size()-1), Globals.getaType().getIcon());
+        placeMarker(l.get(l.size() - 1), Globals.getaType().getIcon());
         placeMarker(startLocation.getPosition(), Icon.START_FLAG);
         placeMarker(finishLocation.getPosition(), Icon.FINISH_FLAG);
         mMap.addPolyline(new PolylineOptions()
@@ -442,7 +452,14 @@ public class OurGoogleMap extends FragmentActivity implements
             previusLocation.setLatitude(l.get(l.size() - 1).latitude);
             previusLocation.setLatitude(l.get(l.size()-1).longitude);
         }
+        drawRandomPath();
 
+    }
+
+    private void drawRandomPath()
+    {
+        for(PolylineOptions p :r.getGeneratedPath())
+            mMap.addPolyline(p);
     }
 
     public void handleStart(Location location) {
@@ -463,7 +480,10 @@ public class OurGoogleMap extends FragmentActivity implements
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
         points.add(latLng);
         handleNewLocation(location);
-        chooseDestination();
+        if (Globals.getCustomDestination())
+            chooseDestination();
+        else
+            generateRandomPath();
         connected = true;
         Log.i("runnin", "handleStart finsih");
     }
@@ -482,19 +502,32 @@ public class OurGoogleMap extends FragmentActivity implements
 
     public void generateRandomPath(View v)
     {
-        if(finishLocation != null) {
-            float newRadius = getDistanceBetweenCurrentAndFinish();
-            reScaleCircle(newRadius+100);
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrLocation.getPosition(), zoomLevel));
-            RandomPathGenerator r = new RandomPathGenerator(mCurrLocation.getPosition(), this, mMap);
-            r.generate(finishLocation.getPosition());
-            makeGone();
+        generateRandomPath();
+    }
+
+    public void generateRandomPath() {
+        if (!Globals.getCustomDestination()) {
+            r = new RandomPathGenerator(mCurrLocation.getPosition(), this, mMap);
+            r.generate(Globals.getStartLocation(), null);
             randomPathGenerationBegun = true;
-            beginTimer();
+            findViewById(R.id.startWorkoutButton).setVisibility(View.VISIBLE);
+            placeMarker(startLocation.getPosition(),Icon.FINISH_FLAG);
         }
-        else
-        {
-            Toast.makeText(getBaseContext(), "You must chose a destination", Toast.LENGTH_SHORT).show();
+        else {
+            if(finishLocation != null) {
+                float newRadius = getDistanceBetweenCurrentAndFinish();
+                reScaleCircle(newRadius+100);
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mCurrLocation.getPosition(), zoomLevel));
+                r = new RandomPathGenerator(mCurrLocation.getPosition(), this, mMap);
+                r.generate(Globals.getStartLocation(), finishLocation.getPosition());
+                randomPathGenerationBegun = true;
+                makeGone();
+                findViewById(R.id.startWorkoutButton).setVisibility(View.VISIBLE);
+            }
+            else
+            {
+                Toast.makeText(getBaseContext(), "You must chose a destination", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -559,15 +592,6 @@ public class OurGoogleMap extends FragmentActivity implements
 
     private  void chooseDestination()
     {
-        if(Globals.getCustomDestination() == false)
-        {
-
-            placeMarker(STORKE_TOWER,Icon.FINISH_FLAG);
-            Button confirmB = (Button)findViewById(R.id.confrimButton);
-            confirmB.performClick();
-            makeGone();
-            return;
-        }
         makeVisible();
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
@@ -707,6 +731,7 @@ public class OurGoogleMap extends FragmentActivity implements
 
     private void beginTimer()
     {
+        findViewById(R.id.startWorkoutButton).setVisibility(View.GONE);
         findViewById(R.id.timer).setVisibility(View.VISIBLE);
         findViewById(R.id.endWorkoutButton).setVisibility(View.VISIBLE);
         startTimer();
@@ -788,6 +813,11 @@ public class OurGoogleMap extends FragmentActivity implements
     public void endWorkout(View v)
     {
         confirmEnd();
+    }
+
+    public void startWorkout(View v) {
+        placeMarker(Globals.getNonCustomDest(),Icon.FINISH_FLAG);
+        beginTimer();
     }
 
     private float distanceBetweenLatLngs(LatLng p1, LatLng p2)

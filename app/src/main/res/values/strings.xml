@@ -31,6 +31,7 @@
     <string name="distance">5</string>
     <string name="addressText">Enter Address of Destination</string>
     <string name="addressTextButton">Done</string>
+    <string name="activitySpin">Choose Activity Type</string>
 
     <string-array name="months">
         <item>Jan</item>

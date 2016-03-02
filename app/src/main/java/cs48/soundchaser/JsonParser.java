@@ -14,6 +14,12 @@ import com.google.android.gms.maps.model.LatLng;
 
 public class JsonParser {
 
+    private JSONObject distanceObj;
+    public JSONObject getDistanceObj() {
+        return distanceObj;
+    }
+
+
     public List<List<HashMap<String, String>>> parse(JSONObject jObject) {
         List<List<HashMap<String, String>>> routes = new ArrayList<List<HashMap<String, String>>>();
         JSONArray jRoutes = null;
@@ -24,6 +30,8 @@ public class JsonParser {
             /** Traversing all routes */
             for (int i = 0; i < jRoutes.length(); i++) {
                 jLegs = ((JSONObject) jRoutes.get(i)).getJSONArray("legs");
+                JSONObject distanceTimeObj = jLegs.getJSONObject(0);
+                distanceObj = distanceTimeObj.getJSONObject("distance");
                 List<HashMap<String, String>> path = new ArrayList<HashMap<String, String>>();
 
                 /** Traversing all legs */
@@ -96,4 +104,3 @@ public class JsonParser {
         return poly;
     }
 }
-

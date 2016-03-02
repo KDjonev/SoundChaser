@@ -16,6 +16,7 @@ public class Globals {
     private static boolean customDestination = false;
     private static LatLng startLocation = null;
     private static LatLng currentLocation = null;
+    private static LatLng nonCustomDest = null;
     private static List<LatLng> listOfLocations = new ArrayList<LatLng>();
     private static ActivityType aType = ActivityType.DEFAULT;
 
@@ -67,7 +68,7 @@ public class Globals {
         if(distanceToRun > 0) {
             Globals.distanceToRun = distanceToRun;
         }
-        setMaximumRadius(distanceToRun/2);
+        setMaximumRadius(distanceToRun / 2);
     }
 
     public static double getMaximumRadius() {
@@ -96,4 +97,8 @@ public class Globals {
     {
         return customDestination;
     }
+
+    public static void setNonCustomDest(LatLng nonCustDest) { nonCustomDest = nonCustDest; }
+    public static LatLng getNonCustomDest() { return nonCustomDest; }
+
 }

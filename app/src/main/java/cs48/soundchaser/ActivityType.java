@@ -4,10 +4,10 @@ package cs48.soundchaser;
  * Created by Krassi on 2/22/2016.
  */
 public enum ActivityType {
-    WALKING(3,25,5,12,8, Icon.WALK_MAN),
-    RUNNING(10,50,5,8,5, Icon.RUN_MAN),
-    BIKING(15,50,5,6,3, Icon.BIKER),
-    DEFAULT(3,25,5,12,8, Icon.RUN_MAN);
+    WALKING(3,30,5,10,5, Icon.WALK_MAN),
+    RUNNING(11,55,5,5,3, Icon.RUN_MAN),
+    BIKING(20,60,5,3,1, Icon.BIKER),
+    DEFAULT(15,15,5,1,1, Icon.HIKER);
 
     private double validSpeed; //m/s
     private double validDisp; //m
@@ -20,8 +20,8 @@ public enum ActivityType {
         this.validSpeed = validSpeed;
         this.validDisp = validDisp;
         this.smallestDisp = smallestDisp;
-        this.interval = interval;
-        this.fastestInterval = fastestInterval;
+        this.interval = interval * 1000;
+        this.fastestInterval = fastestInterval * 1000;
         this.icon = icon;
     }
 
