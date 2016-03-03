@@ -44,8 +44,9 @@
         android:onClick="startActivity"
         android:layout_gravity="center_horizontal"
         android:layout_weight="0.10"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true" />
+        android:layout_marginBottom="77dp" />
 
     <EditText
         android:layout_width="wrap_content"
@@ -82,6 +83,16 @@
         android:imeOptions= "actionDone"
         android:paddingTop="10dp" />
 
+    <Spinner
+        android:id="@+id/activitySpinner"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:prompt="@string/activitySpin"
+        android:paddingTop="10dp"
+        android:layout_below="@+id/textView3"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -89,18 +100,9 @@
         android:id="@+id/customDestination"
         android:checked="false"
         android:textSize="28dp"
+        android:paddingTop="10dp"
         android:layout_above="@+id/startButton"
         android:layout_centerHorizontal="true"
-        android:paddingTop="10dp" />
-
-    <Spinner
-        android:id="@+id/activitySpinner"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:prompt="@string/activitySpin"
-        android:layout_below="@+id/textView3"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:paddingTop="10dp" />
+        android:layout_marginBottom="71dp" />
 
 </RelativeLayout>

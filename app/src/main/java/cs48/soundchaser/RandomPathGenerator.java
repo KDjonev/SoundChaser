@@ -43,6 +43,8 @@ public class RandomPathGenerator {
         this.startLatLng = startLatLng;
         this.context = context;
         this.mMap = mMap;
+        distanceToRun = Globals.getDistanceToRun();
+        maxRadius = Globals.getMaximumRadius();
     }
 
     public List<PolylineOptions> getGeneratedPath() {
@@ -56,7 +58,7 @@ public class RandomPathGenerator {
      * drawn between source and custom dest WHICH MAY GO OUTSIDE RADIUS.
      */
     public void generate(LatLng startLatLng, LatLng dest) {
-        double boundingDistance = Math.min(Globals.getMaximumRadius(), Globals.getDistanceToRun());
+        double boundingDistance = Math.min(maxRadius, distanceToRun);
         if (!Globals.getCustomDestination()) {
             RandomPoint destPt = new RandomPoint(Globals.getStartLocation(), boundingDistance);
             dest = destPt.getCoordinates();
@@ -172,19 +174,17 @@ public class RandomPathGenerator {
                 else {
                     polyLineOptions.addAll(points);
                     polyLineOptions.width(10);
-                    if (FOR_DEBUGGING_COLORS % 2 == 0) // DEBUG
-                        polyLineOptions.color(Color.RED);
-                    else
-                        polyLineOptions.color(Color.DKGRAY);
-                    ++FOR_DEBUGGING_COLORS;
+                    polyLineOptions.color(pickColor());
                 }
             }
 
             if (isPtInsideRadius) {
-                mMap.addPolyline(polyLineOptions);
+                //mMap.addPolyline(polyLineOptions);
                 double lengthKm = convertLengthToKm(subPathLengthString);
+                System.out.println("SUBPATH LENGTH");
+                System.out.println(subPathLengthString); // DEBUG
                 generatedPathLength = generatedPathLength + lengthKm;
-                if (generatedPathLength >= Globals.getDistanceToRun()) {
+                if (generatedPathLength >= distanceToRun) {
                     isOverDesiredLength = true;
                 }
                 generatedPath.add(polyLineOptions);
@@ -199,13 +199,23 @@ public class RandomPathGenerator {
                 System.out.println(startLatLng); // DEBUG
 
                 System.out.println(generatedPathLength); // DEBUG
-                String generatedPathLengthStr = Double.toString(generatedPathLength) + " km";
-                Toast.makeText(context, generatedPathLengthStr, Toast.LENGTH_SHORT).show(); // DEBUG
+                //String generatedPathLengthStr = Double.toString(generatedPathLength) + " km";
+                //Toast.makeText(context, generatedPathLengthStr, Toast.LENGTH_SHORT).show(); // DEBUG
 
                 if (!isOverDesiredLength && !Globals.getCustomDestination()) {
                     generate(startLatLng, null); // Need to add another sub-path to generatedPath to make it longer.
                 }
-                else {  // Path is good. Draw it!
+                else {  // Draw path to map
+                    if (!Globals.getCustomDestination()) { // shorten path first
+                        List<LatLng> newLastSegment = shavePath(generatedPath);
+                        Globals.setNonCustomDest(newLastSegment.get(newLastSegment.size() - 1));
+                        PolylineOptions lastSegment = new PolylineOptions();
+                        lastSegment.addAll(newLastSegment);
+                        lastSegment.width(10);
+                        ++FOR_DEBUGGING_COLORS;
+                        lastSegment.color(pickColor());
+                        generatedPath.set(generatedPath.size() - 1, lastSegment);
+                    }
                     for (int i = 0; i < generatedPath.size(); i++) {
                         mMap.addPolyline(generatedPath.get(i));
                         System.out.println("NUMBER OF SUBPATHS:"); // DEBUG
@@ -225,7 +235,7 @@ public class RandomPathGenerator {
         float[] dist = new float[2];
         Location.distanceBetween(startLat, startLng, lat, lng, dist);
         float distInKm = dist[0]/1000;
-        if (distInKm > Math.min(Globals.getMaximumRadius(), Globals.getDistanceToRun())) {
+        if (distInKm > Math.min(maxRadius, distanceToRun)) {
             return false;
         }
         return true;
@@ -233,9 +243,67 @@ public class RandomPathGenerator {
 
     private double convertLengthToKm(String subPathLengthString) {
         double NUM_OF_KM_IN_MILE = 1.60934;
-        // get the value of length without the mi units
+        double NUM_OF_KM_IN_FOOT = 0.0003048;
+        double lengthKm = 0;
+        //get the units
+        String units = subPathLengthString.substring(subPathLengthString.indexOf(' ')+1, subPathLengthString.length());
+        // get the value of length without the units
         String number = subPathLengthString.substring(0, subPathLengthString.indexOf(' '));
-        double lengthKm = Double.parseDouble(number);
-        return lengthKm*NUM_OF_KM_IN_MILE;
+        if (units.equals("ft")) {
+            lengthKm = Double.parseDouble(number) * NUM_OF_KM_IN_FOOT;
+        }
+        else if (units.equals("mi")){
+            lengthKm = Double.parseDouble(number) * NUM_OF_KM_IN_MILE;
+        }
+        return lengthKm;
+    }
+
+
+    /* Given a path of length >= distanceToRun, this method will find
+       the cutoff point to make length = distanceToRun and then return the
+       coordinates of the shortened path.
+     */
+   private List<LatLng> shavePath(List<PolylineOptions> path) {
+       PolylineOptions lastPathSegment = path.get(generatedPath.size() - 1);
+       List<LatLng> lastSegment = lastPathSegment.getPoints();
+       if (generatedPathLength == distanceToRun)
+           return lastSegment;
+       List<LatLng> toRemove = new ArrayList<LatLng>();
+       int cutoffIndx = lastSegment.size()-2; // Starting from end, going backwards
+       double lengthToCut = generatedPathLength - distanceToRun;
+       double measuredLength = 0; // km
+       while (measuredLength < lengthToCut && cutoffIndx != -1) {
+           measuredLength += (distanceBetweenLatLngs(lastSegment.get(cutoffIndx), lastSegment.get(cutoffIndx+1)))/1000;
+           toRemove.add(lastSegment.get(cutoffIndx+1));
+           --cutoffIndx;
+       }
+       lastSegment.removeAll(toRemove);
+       return lastSegment;
+    }
+
+    private float distanceBetweenLatLngs(LatLng p1, LatLng p2)
+    {
+        //location of first postition
+        Location loc1 = new Location("");
+        loc1.setLatitude(p1.latitude);
+        loc1.setLongitude(p1.longitude);
+        //location of second postition
+        Location loc2 = new Location("");
+        loc2.setLatitude(p2.latitude);
+        loc2.setLongitude(p2.longitude);
+        //distance
+        float distance = loc1.distanceTo(loc2);
+        return distance;
+    }
+
+    private int pickColor() {
+        int color;
+        if (FOR_DEBUGGING_COLORS % 2 == 0) // DEBUG
+            color = Color.RED;
+        else
+            color = Color.DKGRAY;
+        ++FOR_DEBUGGING_COLORS;
+        return color;
     }
 }
+

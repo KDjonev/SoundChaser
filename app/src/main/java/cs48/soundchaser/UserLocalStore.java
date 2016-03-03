@@ -17,7 +17,7 @@ public class UserLocalStore {
 
     public void storeUserData(User user) {
         SharedPreferences.Editor spEditor = userLocalDatabase.edit();
-        spEditor.putString("name", user.getName());
+        spEditor.putString("firstname lastname", user.getName());
         spEditor.putString("dobMonth", user.getDobMonth());
         spEditor.putString("dobDay", user.getDobDay());
         spEditor.putString("dobYear", user.getDobYear());
@@ -28,7 +28,7 @@ public class UserLocalStore {
     }
 
     public User getUserData() {
-        String name = userLocalDatabase.getString("name", "");
+        String name = userLocalDatabase.getString("firstname lastname", "");
         String dobMonth = userLocalDatabase.getString("dobMonth", "");
         String dobDay = userLocalDatabase.getString("dobDay", "");
         String dobYear = userLocalDatabase.getString("dobYear", "");

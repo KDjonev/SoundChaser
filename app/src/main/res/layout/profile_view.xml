@@ -26,6 +26,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
         android:id="@+id/setNameViewText"
         android:layout_gravity="center_horizontal"
         android:text="@string/setNameViewText"
@@ -49,6 +50,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/setDobMonthViewText"
             android:layout_gravity="center_horizontal"
             android:text="@string/setDobMonthViewText"
@@ -58,6 +60,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/setDobDayViewText"
             android:layout_gravity="center_horizontal"
             android:text="@string/setDobDayViewText"
@@ -66,6 +69,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/setDobYearViewText"
             android:layout_gravity="center_horizontal"
             android:text="@string/setDobYearViewText"
@@ -88,6 +92,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/setFtViewText"
             android:layout_gravity="center_horizontal"
             android:text="@string/setFtViewText"
@@ -106,6 +111,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/setInViewText"
             android:layout_gravity="center_horizontal"
             android:text="@string/setInViewText"
@@ -138,6 +144,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/setWeightViewText"
             android:layout_gravity="center_horizontal"
             android:text="@string/setWeightViewText"
@@ -151,5 +158,13 @@
             android:id="@+id/lbViewText"
             android:layout_weight="1" />
     </LinearLayout>
+
+    <Button
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:text="@string/editProfileButton"
+        android:id="@+id/editProfileButton"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/colorButton" />
 
 </LinearLayout>

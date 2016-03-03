@@ -40,6 +40,9 @@ public class Profile extends Activity implements View.OnClickListener {
 
     private void setProfile() {
         setContentView(R.layout.profile_creation);
+        User user = userLocalStore.getUserData();
+        nameEditText = (EditText) findViewById(R.id.nameEditText);
+        nameEditText.setText(user.getName());
         setUpDropdowns();
         createProfileButton = (Button) findViewById(R.id.createProfileButton);
         createProfileButton.setOnClickListener(this);
@@ -47,19 +50,27 @@ public class Profile extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        nameEditText = (EditText) findViewById(R.id.nameEditText);
-        String name = nameEditText.getText().toString();
-        String dobMonth = spinnerMonth.getSelectedItem().toString();
-        String dobDay = spinnerDay.getSelectedItem().toString();
-        String dobYear = spinnerYear.getSelectedItem().toString();
-        String heightFt = spinnerFeet.getSelectedItem().toString();
-        String heightIn = spinnerInch.getSelectedItem().toString();
-        String weight = spinnerWeight.getSelectedItem().toString();
+        switch (v.getId()) {
 
-        User user = new User(name, dobMonth, dobDay, dobYear, heightFt, heightIn, weight);
-        userLocalStore.storeUserData(user);
-        userLocalStore.setIsProfileCreated(true);
-        displayProfile();
+            case R.id.createProfileButton:
+                nameEditText = (EditText) findViewById(R.id.nameEditText);
+                String name = nameEditText.getText().toString();
+                String dobMonth = spinnerMonth.getSelectedItem().toString();
+                String dobDay = spinnerDay.getSelectedItem().toString();
+                String dobYear = spinnerYear.getSelectedItem().toString();
+                String heightFt = spinnerFeet.getSelectedItem().toString();
+                String heightIn = spinnerInch.getSelectedItem().toString();
+                String weight = spinnerWeight.getSelectedItem().toString();
+
+                User user = new User(name, dobMonth, dobDay, dobYear, heightFt, heightIn, weight);
+                userLocalStore.storeUserData(user);
+                userLocalStore.setIsProfileCreated(true);
+                displayProfile();
+                break;
+
+            case R.id.editProfileButton:
+                setProfile();
+        }
     }
 
     public void displayProfile() {
@@ -79,6 +90,8 @@ public class Profile extends Activity implements View.OnClickListener {
         setInViewText.setText(user.getHeightIn());
         setWeightViewText = (TextView) findViewById(R.id.setWeightViewText);
         setWeightViewText.setText(user.getWeight());
+        Button edit = (Button) findViewById(R.id.editProfileButton);
+        edit.setOnClickListener(this);
     }
 
     private void setUpDropdowns() {
@@ -116,6 +129,27 @@ public class Profile extends Activity implements View.OnClickListener {
         spinnerWeight = (Spinner)findViewById(R.id.weight_spinner);
         adapterWeight = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, weight);
         spinnerWeight.setAdapter(adapterWeight);
+
+        if (userLocalStore.getIsProfileCreated()) {
+            User user = userLocalStore.getUserData();
+            spinnerMonth.setSelection(getIndex(spinnerMonth, user.getDobMonth()));
+            spinnerDay.setSelection(getIndex(spinnerDay, user.getDobDay()));
+            spinnerYear.setSelection(getIndex(spinnerYear,user.getDobYear()));
+            spinnerFeet.setSelection(getIndex(spinnerFeet,user.getHeightFt()));
+            spinnerInch.setSelection(getIndex(spinnerInch,user.getHeightIn()));
+            spinnerWeight.setSelection(getIndex(spinnerWeight, user.getWeight()));
+        }
+    }
+
+    private int getIndex(Spinner spinner, String myString){
+        int index = 0;
+        for (int i=0;i<spinner.getCount();i++){
+            System.out.println(spinner.getItemAtPosition(i)); // DEBUG
+            if (spinner.getItemAtPosition(i).toString().equals(myString)){
+                index = i;
+            }
+        }
+        return index;
     }
 
 }
