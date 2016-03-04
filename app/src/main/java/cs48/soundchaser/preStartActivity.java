@@ -28,6 +28,7 @@ public class preStartActivity extends Activity implements OnItemSelectedListener
     private double radius = 2.5;
     private boolean customDestination = false;
     private ActivityType aT = ActivityType.DEFAULT;
+    private int errorMessageType = 0; // for validating input
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -120,16 +121,24 @@ public class preStartActivity extends Activity implements OnItemSelectedListener
         gpsCheck();
     }
 
+    /* 0: No error, 1: Syntax error, 2: Distance <= 0, 3: Radius <= 0.25 */
     private boolean validateInput() {
-        distance = Double.parseDouble(((EditText) findViewById(R.id.distance)).getText().toString());
-        //Log.v("input", "distance: " + Double.toString(distance));
-        radius = Double.parseDouble(((EditText) findViewById(R.id.radius)).getText().toString());
-        //Log.v("input", "radius: " + Double.toString(radius));
-        if (distance <= 0 || radius < 0) {
+        try {
+            distance = Double.parseDouble(((EditText) findViewById(R.id.distance)).getText().toString());
+            //Log.v("input", "distance: " + Double.toString(distance));
+            radius = Double.parseDouble(((EditText) findViewById(R.id.radius)).getText().toString());
+            //Log.v("input", "radius: " + Double.toString(radius));
+        } catch(NumberFormatException e) {
+            errorMessageType = 1;
             return false;
-        } else if (!customDestination && (radius > (distance / 2.0))) {
-            radius = distance / 2.0;
-            ((EditText) findViewById(R.id.radius)).setText(Double.toString(radius));
+        }
+        if (distance <= 0) {
+            errorMessageType = 2;
+            return false;
+        }
+        if (radius < 0.25) {
+            errorMessageType = 3;
+            return false;
         }
         return true;
 
@@ -137,7 +146,16 @@ public class preStartActivity extends Activity implements OnItemSelectedListener
 
     private void incorrectInput() {
         Context context = getApplicationContext();
-        CharSequence text = "Incorrect input, please enter again!";
+        CharSequence text;
+        if (errorMessageType == 1) {
+            text = "Incorrect input, please enter again!";
+        }
+        else if (errorMessageType == 2) {
+            text = "Distance must be greater than zero.";
+        }
+        else {
+            text = "Radius cannot be less than 0.25 km.";
+        }
         int duration = Toast.LENGTH_LONG;
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();

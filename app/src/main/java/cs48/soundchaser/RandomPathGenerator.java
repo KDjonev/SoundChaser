@@ -58,9 +58,8 @@ public class RandomPathGenerator {
      * drawn between source and custom dest WHICH MAY GO OUTSIDE RADIUS.
      */
     public void generate(LatLng startLatLng, LatLng dest) {
-        double boundingDistance = Math.min(maxRadius, distanceToRun);
         if (!Globals.getCustomDestination()) {
-            RandomPoint destPt = new RandomPoint(Globals.getStartLocation(), boundingDistance);
+            RandomPoint destPt = new RandomPoint(Globals.getStartLocation(), maxRadius);
             dest = destPt.getCoordinates();
         }
 
@@ -235,7 +234,7 @@ public class RandomPathGenerator {
         float[] dist = new float[2];
         Location.distanceBetween(startLat, startLng, lat, lng, dist);
         float distInKm = dist[0]/1000;
-        if (distInKm > Math.min(maxRadius, distanceToRun)) {
+        if (distInKm > maxRadius) {
             return false;
         }
         return true;
