@@ -511,6 +511,7 @@ public class OurGoogleMap extends FragmentActivity implements
             r.generate(Globals.getStartLocation(), null);
             randomPathGenerationBegun = true;
             findViewById(R.id.startWorkoutButton).setVisibility(View.VISIBLE);
+            findViewById(R.id.regenerateButton).setVisibility(View.VISIBLE);
             placeMarker(startLocation.getPosition(),Icon.FINISH_FLAG);
         }
         else {
@@ -732,6 +733,7 @@ public class OurGoogleMap extends FragmentActivity implements
     private void beginTimer()
     {
         findViewById(R.id.startWorkoutButton).setVisibility(View.GONE);
+        findViewById(R.id.regenerateButton).setVisibility(View.GONE);
         findViewById(R.id.timer).setVisibility(View.VISIBLE);
         findViewById(R.id.endWorkoutButton).setVisibility(View.VISIBLE);
         startTimer();
@@ -818,6 +820,12 @@ public class OurGoogleMap extends FragmentActivity implements
     public void startWorkout(View v) {
         placeMarker(Globals.getNonCustomDest(),Icon.FINISH_FLAG);
         beginTimer();
+    }
+
+    public void regeneratePath(View v) {
+        mMap.clear();
+        generateRandomPath();
+        drawPath(Globals.getListOfLocations());
     }
 
     private float distanceBetweenLatLngs(LatLng p1, LatLng p2)

@@ -16,14 +16,15 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 /**
  * Created by Krassi on 2/7/2016.
+ * CURRENTLY: If no custom destination is set, generatedPath is built by adding together and
+ * shortening default Google paths until generatedPathLength equals distanceToRun. The generatedPath
+ * should never go outside the radius. Otherwise if there's a custom dest, default Google path is
+ * drawn between source and custom dest which may still go outside radius and be of any length.
  */
 public class RandomPathGenerator {
     // private static final LatLng STORKE_TOWER = new LatLng(34.4126047, -119.8484183);
@@ -34,6 +35,7 @@ public class RandomPathGenerator {
     private GoogleMap mMap;
     private ProgressDialog dialog;
     private boolean isOverDesiredLength = false;
+    private boolean isGenerationStarted = false;
     private List<PolylineOptions> generatedPath =  new ArrayList<PolylineOptions>();
     private double generatedPathLength = 0; // km
     private String subPathLengthString;
@@ -51,12 +53,6 @@ public class RandomPathGenerator {
         return generatedPath;
     }
 
-    /* STILL NEED TO COMBINE AND ADJUST DEFAULT GOOGLE PATHS FOR PATH OF DESIRED LENGTH.
-     * CURRENTLY:
-     * If no custom destination is set, the default Google path is drawn between source
-     * and a RandomPoint. Path should never go outside the radius. Otherwise, default Google path is
-     * drawn between source and custom dest WHICH MAY GO OUTSIDE RADIUS.
-     */
     public void generate(LatLng startLatLng, LatLng dest) {
         if (!Globals.getCustomDestination()) {
             RandomPoint destPt = new RandomPoint(Globals.getStartLocation(), maxRadius);
@@ -71,15 +67,15 @@ public class RandomPathGenerator {
 
     private String getMapsApiDirectionsUrl(LatLng start, LatLng dest) {
         String waypoints = "waypoints=optimize:true|"
-                + startLatLng.latitude + "," + startLatLng.longitude
+                + start.latitude + "," + start.longitude
                 + "|" + "|" + dest.latitude + ","
                 + dest.longitude;
-
-        String OriDest = "origin="+startLatLng.latitude+","+startLatLng.longitude+"&destination="+dest.latitude+","+dest.longitude;
+        String OriDest = "origin="+start.latitude+","+start.longitude+"&destination="+dest.latitude+","+dest.longitude;
         String sensor = "sensor=false";
+        String units = "units=metric";
         String mode = "mode=walking";
-        String params = OriDest+"&%20"+waypoints + "&" + sensor + "&" + mode;
         String output = "json";
+        String params = OriDest+"&%20"+waypoints + "&" + sensor + "&" + units + "&" + mode;
         String url = "https://maps.googleapis.com/maps/api/directions/"
                 + output + "?" + params;
         return url;
@@ -101,14 +97,16 @@ public class RandomPathGenerator {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            dialog = ProgressDialog.show(context, "Please Wait", "Generating path...");
+            if (!isGenerationStarted) {
+                dialog = ProgressDialog.show(context, "Please Wait", "Generating path...");
+                isGenerationStarted = true;
+            }
         }
 
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
             new ParserTask().execute(result);
-            dialog.dismiss();
         }
     }
 
@@ -164,7 +162,6 @@ public class RandomPathGenerator {
                         }
                     }
                     points.add(position);
-                    System.out.println(points);  // DEBUG
                 }
 
                 if (!isPtInsideRadius) {
@@ -178,7 +175,6 @@ public class RandomPathGenerator {
             }
 
             if (isPtInsideRadius) {
-                //mMap.addPolyline(polyLineOptions);
                 double lengthKm = convertLengthToKm(subPathLengthString);
                 System.out.println("SUBPATH LENGTH");
                 System.out.println(subPathLengthString); // DEBUG
@@ -194,12 +190,10 @@ public class RandomPathGenerator {
                 Globals.setNonCustomDest(lastPt);
                 startLatLng = lastPt; /* If there is to be another sub-path, it will start at
                                         the end off the last sub-path */
+
                 System.out.println("START LATLNG:"); // DEBUG
                 System.out.println(startLatLng); // DEBUG
-
                 System.out.println(generatedPathLength); // DEBUG
-                //String generatedPathLengthStr = Double.toString(generatedPathLength) + " km";
-                //Toast.makeText(context, generatedPathLengthStr, Toast.LENGTH_SHORT).show(); // DEBUG
 
                 if (!isOverDesiredLength && !Globals.getCustomDestination()) {
                     generate(startLatLng, null); // Need to add another sub-path to generatedPath to make it longer.
@@ -217,9 +211,11 @@ public class RandomPathGenerator {
                     }
                     for (int i = 0; i < generatedPath.size(); i++) {
                         mMap.addPolyline(generatedPath.get(i));
-                        System.out.println("NUMBER OF SUBPATHS:"); // DEBUG
-                        System.out.println(generatedPath.size()); // DEBUG
                     }
+                    isGenerationStarted = false;
+                    dialog.dismiss();
+                    System.out.println("NUMBER OF SUBPATHS:"); // DEBUG
+                    System.out.println(generatedPath.size()); // DEBUG
                 }
             }
             else {
@@ -241,18 +237,16 @@ public class RandomPathGenerator {
     }
 
     private double convertLengthToKm(String subPathLengthString) {
-        double NUM_OF_KM_IN_MILE = 1.60934;
-        double NUM_OF_KM_IN_FOOT = 0.0003048;
         double lengthKm = 0;
         //get the units
         String units = subPathLengthString.substring(subPathLengthString.indexOf(' ')+1, subPathLengthString.length());
         // get the value of length without the units
         String number = subPathLengthString.substring(0, subPathLengthString.indexOf(' '));
-        if (units.equals("ft")) {
-            lengthKm = Double.parseDouble(number) * NUM_OF_KM_IN_FOOT;
+        if (units.equals("m")) {
+            lengthKm = Double.parseDouble(number) / 1000;
         }
-        else if (units.equals("mi")){
-            lengthKm = Double.parseDouble(number) * NUM_OF_KM_IN_MILE;
+        else if (units.equals("km")){
+            lengthKm = Double.parseDouble(number);
         }
         return lengthKm;
     }

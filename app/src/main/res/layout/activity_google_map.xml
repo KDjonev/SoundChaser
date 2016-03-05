@@ -70,7 +70,24 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Start"
+            android:text="REGENERATE PATH"
+            android:id="@+id/regenerateButton"
+            android:clickable="true"
+            android:onClick="regeneratePath"
+            android:textSize="20dp"
+            android:visibility="gone"
+            android:alpha="0.75"
+            android:layout_marginRight="100dp"
+            android:layout_marginEnd="42dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="START"
             android:id="@+id/startWorkoutButton"
             android:clickable="true"
             android:onClick="startWorkout"
@@ -80,14 +97,13 @@
             android:layout_marginRight="100dp"
             android:layout_marginEnd="42dp"
             android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true" />
+            android:layout_alignParentRight ="true"/>
 
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="End"
+            android:text="END"
             android:id="@+id/endWorkoutButton"
             android:clickable="true"
             android:onClick="endWorkout"
