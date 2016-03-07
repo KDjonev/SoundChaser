@@ -139,40 +139,40 @@ public class RandomPathGenerator {
             ArrayList<LatLng> points = new ArrayList<>();
             PolylineOptions polyLineOptions = null;
             boolean isPtInsideRadius = true;
+            if (nullLength==false) {
+                // traversing through routes
+                System.out.println(routes.size());
+                for (int i = 0; i < routes.size(); i++) {
+                    points = new ArrayList<LatLng>();
+                    polyLineOptions = new PolylineOptions();
+                    List<HashMap<String, String>> path = routes.get(i);
 
-            // traversing through routes
-            System.out.println(routes.size());
-            for (int i = 0; i < routes.size(); i++) {
-                points = new ArrayList<LatLng>();
-                polyLineOptions = new PolylineOptions();
-                List<HashMap<String, String>> path = routes.get(i);
+                    for (int j = 0; j < path.size(); j++) {
+                        HashMap<String, String> point = path.get(j);
 
-                for (int j = 0; j < path.size(); j++) {
-                    HashMap<String, String> point = path.get(j);
+                        double lat = Double.parseDouble(point.get("lat"));
+                        double lng = Double.parseDouble(point.get("lng"));
+                        LatLng position = new LatLng(lat, lng);
 
-                    double lat = Double.parseDouble(point.get("lat"));
-                    double lng = Double.parseDouble(point.get("lng"));
-                    LatLng position = new LatLng(lat, lng);
-
-                    // If a point lies outside the radius, this path cannot be used.
-                    // For now, a path to custom destination can be outside radius though.
-                    if (!Globals.getCustomDestination()) {
-                        isPtInsideRadius = isInCircle(lat, lng);
-                        if (!isPtInsideRadius) {
-                            System.out.println("OUTSIDE!!!!!!!!!!"); // DEBUG
-                            break;
+                        // If a point lies outside the radius, this path cannot be used.
+                        // For now, a path to custom destination can be outside radius though.
+                        if (!Globals.getCustomDestination()) {
+                            isPtInsideRadius = isInCircle(lat, lng);
+                            if (!isPtInsideRadius) {
+                                System.out.println("OUTSIDE!!!!!!!!!!"); // DEBUG
+                                break;
+                            }
                         }
+                        points.add(position);
                     }
-                    points.add(position);
-                }
 
-                if (!isPtInsideRadius) {
-                    break;
-                }
-                else {
-                    polyLineOptions.addAll(points);
-                    polyLineOptions.width(10);
-                    polyLineOptions.color(pickColor());
+                    if (!isPtInsideRadius) {
+                        break;
+                    } else {
+                        polyLineOptions.addAll(points);
+                        polyLineOptions.width(10);
+                        polyLineOptions.color(pickColor());
+                    }
                 }
             }
 
