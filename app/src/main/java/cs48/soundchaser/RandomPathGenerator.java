@@ -40,6 +40,7 @@ public class RandomPathGenerator {
     private double generatedPathLength = 0; // km
     private String subPathLengthString;
     private int FOR_DEBUGGING_COLORS = 0;
+    private boolean nullLength = false;
 
     public RandomPathGenerator(LatLng startLatLng, Context context, GoogleMap mMap) {
         this.startLatLng = startLatLng;
@@ -128,6 +129,7 @@ public class RandomPathGenerator {
                 subPathLengthString = distanceObj.getString("text");
             } catch (Exception e) {
                 e.printStackTrace();
+                nullLength = true;
             }
             return routes;
         }
@@ -174,7 +176,7 @@ public class RandomPathGenerator {
                 }
             }
 
-            if (isPtInsideRadius) {
+            if (isPtInsideRadius && nullLength==false) {
                 double lengthKm = convertLengthToKm(subPathLengthString);
                 System.out.println("SUBPATH LENGTH");
                 System.out.println(subPathLengthString); // DEBUG
@@ -186,19 +188,17 @@ public class RandomPathGenerator {
                 System.out.println("GENERATED PATH SIZE"); // DEBUG
                 System.out.println(generatedPath.size()); // DEBUG
 
-                LatLng lastPt = points.get(points.size()-1);
+                LatLng lastPt = points.get(points.size() - 1);
                 Globals.setNonCustomDest(lastPt);
                 startLatLng = lastPt; /* If there is to be another sub-path, it will start at
                                         the end off the last sub-path */
-
                 System.out.println("START LATLNG:"); // DEBUG
                 System.out.println(startLatLng); // DEBUG
                 System.out.println(generatedPathLength); // DEBUG
 
                 if (!isOverDesiredLength && !Globals.getCustomDestination()) {
                     generate(startLatLng, null); // Need to add another sub-path to generatedPath to make it longer.
-                }
-                else {  // Draw path to map
+                } else {  // Draw path to map
                     if (!Globals.getCustomDestination()) { // shorten path first
                         List<LatLng> newLastSegment = shavePath(generatedPath);
                         Globals.setNonCustomDest(newLastSegment.get(newLastSegment.size() - 1));
@@ -219,7 +219,10 @@ public class RandomPathGenerator {
                 }
             }
             else {
-                generate(startLatLng, null); // Sub-path was outside radius. Generate a new one.
+                nullLength = false;
+                generate(startLatLng, null); // Sub-path was outside radius, or
+                                            // distanceObj.getString("text") threw Null,
+                                            // so generate path again.
             }
         }
     }
