@@ -37,10 +37,12 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
         Intent i;
         switch(id) {
+            /*
             case R.id.settings :
                 i = new Intent(this, Settings.class);
                 startActivity(i);
                 break;
+            */
             case R.id.profile :
                 i = new Intent(this, Profile.class);
                 startActivity(i);

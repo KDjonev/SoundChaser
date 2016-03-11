@@ -15,18 +15,18 @@
         android:orderInCategory="100"
         android:title="@string/viewData"
         app:showAsAction="never" />
+    <!--
+        <item
+            android:id="@+id/settings"
+            android:orderInCategory="100"
+            android:title="@string/settings"
+            app:showAsAction="never" />
+    -->
+        <item
+            android:id="@+id/help"
+            android:orderInCategory="100"
+            android:title="@string/helpButton"
+            app:showAsAction="never" />
 
-    <item
-        android:id="@+id/settings"
-        android:orderInCategory="100"
-        android:title="@string/settings"
-        app:showAsAction="never" />
 
-    <item
-        android:id="@+id/help"
-        android:orderInCategory="100"
-        android:title="@string/helpButton"
-        app:showAsAction="never" />
-
-
-</menu>
+    </menu>
